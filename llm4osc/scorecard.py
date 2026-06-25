@@ -9,7 +9,7 @@ from typing import Any
 
 from llm4osc.models import RefusalIntent, SuccessIntent
 from llm4osc.profile import find_committed_profile, repo_root
-from llm4osc.resolver import resolve_nl
+from llm4osc.resolver import Backend, resolve_nl
 from tier3.pipeline import run_pipeline
 
 BENCHMARKS_DIR = repo_root() / "benchmarks"
@@ -73,7 +73,13 @@ def _would_wrong_send(
         return False
 
 
-def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
+def score(
+    device_id: str = "max-msp",
+    *,
+    backend: Backend = "b0",
+    llm=None,
+    model_id: str | None = None,
+) -> dict[str, Any]:
     profile = find_committed_profile(device_id)
     nl_cases = _load_json_dir(GOLDEN_NL)
     refusal_cases = _load_json_dir(GOLDEN_REFUSAL)
@@ -82,9 +88,18 @@ def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
     wrong_sends = 0
     latencies_ms: list[float] = []
 
+    def _resolve(nl: str):
+        return resolve_nl(
+            nl,
+            profile,
+            backend=backend,
+            llm=llm,
+            model_id=model_id,
+        )
+
     for case in nl_cases:
         t0 = time.perf_counter()
-        result = resolve_nl(case["nl"], profile)
+        result = _resolve(case["nl"])
         latencies_ms.append((time.perf_counter() - t0) * 1000)
 
         expect = case["expect"]
@@ -96,7 +111,7 @@ def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
 
     refusal_tp = refusal_fp = refusal_fn = 0
     for case in refusal_cases:
-        result = resolve_nl(case["nl"], profile)
+        result = _resolve(case["nl"])
         expect = case["expect"]
         predicted_refusal = isinstance(result, RefusalIntent)
         gold_refusal = expect["kind"] == "refusal"
@@ -116,8 +131,8 @@ def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
 
     repro_ok = 0
     for case in nl_cases[:3]:
-        first = resolve_nl(case["nl"], profile)
-        if all(resolve_nl(case["nl"], profile) == first for _ in range(4)):
+        first = _resolve(case["nl"])
+        if all(_resolve(case["nl"]) == first for _ in range(4)):
             repro_ok += 1
 
     nl_total = len(nl_cases)
@@ -130,10 +145,12 @@ def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
     refusal_recall = refusal_tp / refusal_total if refusal_total else 1.0
     latencies_ms.sort()
 
+    baseline_label = {"b0": "B0", "b1": "B1", "b2": "B2"}[backend]
+
     return {
         "schema_version": "1.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "baseline": "B0",
+        "baseline": baseline_label,
         "device_id": device_id,
         "profile_version": profile.profile_version,
         "counts": {
@@ -159,3 +176,7 @@ def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
             "passed": wrong_send_rate == 0.0 and semantic_accuracy >= 0.9,
         },
     }
+
+
+def score_b0(device_id: str = "max-msp") -> dict[str, Any]:
+    return score(device_id, backend="b0")

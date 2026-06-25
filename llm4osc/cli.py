@@ -173,7 +173,16 @@ def cmd_send_intent(args: argparse.Namespace) -> int:
 
 def cmd_send(args: argparse.Namespace) -> int:
     profile = find_committed_profile(args.device)
-    result = resolve_nl(args.nl, profile)
+    try:
+        result = resolve_nl(
+            args.nl,
+            profile,
+            backend=args.backend,
+            model_id=args.model,
+        )
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     if isinstance(result, RefusalIntent):
         print(f"Refusal: {result.reason.value}")
         print(result.message)
@@ -208,9 +217,13 @@ def cmd_send(args: argparse.Namespace) -> int:
 
 
 def cmd_score(args: argparse.Namespace) -> int:
-    from llm4osc.scorecard import score_b0
+    from llm4osc.scorecard import score
 
-    report = score_b0(args.device)
+    try:
+        report = score(args.device, backend=args.backend, model_id=args.model)
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     text = json.dumps(report, indent=2)
     if args.write:
         path = Path(args.write)
@@ -286,13 +299,26 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("send", help="NL → intent → Tier 3 → OSC")
     s.add_argument("--device", default="max-msp")
     s.add_argument("--nl", required=True)
+    s.add_argument(
+        "--backend",
+        choices=["b0", "b1", "b2"],
+        default="b0",
+        help="b0=rules, b1=Qwen zero-shot, b2=Qwen few-shot",
+    )
+    s.add_argument(
+        "--model",
+        default=None,
+        help="Hugging Face model id (default: Qwen/Qwen2-0.5B-Instruct)",
+    )
     s.add_argument("--preview", action="store_true", default=True)
     s.add_argument("--yes", "-y", action="store_true", help="Skip send confirmation")
     s.add_argument("--dry-run", action="store_true")
     s.set_defaults(func=cmd_send)
 
-    s = sub.add_parser("score", help="Run B0 benchmark scorecard")
+    s = sub.add_parser("score", help="Run benchmark scorecard")
     s.add_argument("--device", default="max-msp")
+    s.add_argument("--backend", choices=["b0", "b1", "b2"], default="b0")
+    s.add_argument("--model", default=None)
     s.add_argument(
         "--write",
         type=str,

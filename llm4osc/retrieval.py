@@ -31,3 +31,11 @@ def rank_patterns(
         for p in patterns
     ]
     return sorted(scored, key=lambda x: x[1], reverse=True)
+
+
+def patterns_for_context(text: str, patterns: list, k: int = 8) -> list:
+    ranked = rank_patterns(text, patterns)
+    positive = [p for p, score in ranked if score > 0]
+    if positive:
+        return positive[:k]
+    return [p for p, _ in ranked[:k]]
