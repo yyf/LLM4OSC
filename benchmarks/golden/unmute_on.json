@@ -1,0 +1,14 @@
+{
+  "id": "unmute_on",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "mute_off",
+    "address": "/unmute",
+    "type_tags": "i",
+    "args": [1]
+  },
+  "expect": { "address": "/unmute", "args": [1] }
+}

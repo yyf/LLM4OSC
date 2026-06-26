@@ -1,0 +1,8 @@
+{
+  "id": "refuse_unknown",
+  "nl": "flux capacitor to 88 mph",
+  "expect": {
+    "kind": "refusal",
+    "reason": "unknown_pattern"
+  }
+}

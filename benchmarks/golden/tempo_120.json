@@ -1,0 +1,14 @@
+{
+  "id": "tempo_120",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "tempo_set",
+    "address": "/metro/tempo",
+    "type_tags": "f",
+    "args": [120.0]
+  },
+  "expect": { "address": "/metro/tempo", "args": [120.0] }
+}

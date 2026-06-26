@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm4osc.dev/schemas/intent_schema_v1.json",
+  "title": "LLM4OSC Intent Schema v1",
+  "oneOf": [
+    { "$ref": "#/$defs/success_intent" },
+    { "$ref": "#/$defs/refusal_intent" }
+  ],
+  "$defs": {
+    "success_intent": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "kind",
+        "device_id",
+        "profile_version",
+        "pattern_id",
+        "address",
+        "type_tags",
+        "args"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "kind": { "const": "intent" },
+        "device_id": { "type": "string", "minLength": 1 },
+        "profile_version": { "type": "string", "minLength": 1 },
+        "pattern_id": { "type": "string", "minLength": 1 },
+        "address": { "type": "string", "pattern": "^/" },
+        "type_tags": { "type": "string" },
+        "args": { "type": "array" },
+        "bundle_id": { "type": ["string", "null"] },
+        "stream_spec": { "type": ["object", "null"] },
+        "confidence": { "type": ["number", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "refusal_intent": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "kind",
+        "device_id",
+        "profile_version",
+        "reason",
+        "message"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "kind": { "const": "refusal" },
+        "device_id": { "type": "string", "minLength": 1 },
+        "profile_version": { "type": "string", "minLength": 1 },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "unknown_device",
+            "unknown_pattern",
+            "ambiguous_pattern",
+            "out_of_range",
+            "missing_slot",
+            "unsupported_command",
+            "invalid_input"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "candidates": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

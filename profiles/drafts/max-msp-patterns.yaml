@@ -1,0 +1,151 @@
+# Max/MSP OSC patterns for profile import
+# Sources: Cycling '74 udpreceive / UDP networking tutorials
+# https://docs.cycling74.com/reference/udpreceive/
+
+- pattern_id: gain_set
+  address: /gain
+  type_tags: "f"
+  description: Set signal gain level from 0.0 to 1.0
+  tags: [gain, level, amplitude]
+  manual_ref: "Cycling '74 udpreceive — OSC float control"
+  ranges:
+    gain:
+      min: 0.0
+      max: 1.0
+  slots:
+    - name: gain
+      type: float
+      arg_index: 0
+
+- pattern_id: master_volume
+  address: /volume
+  type_tags: "f"
+  description: Set master output volume from 0.0 to 1.0
+  tags: [volume, master, output]
+  manual_ref: "Cycling '74 udpreceive — OSC float control"
+  ranges:
+    volume:
+      min: 0.0
+      max: 1.0
+  slots:
+    - name: volume
+      type: float
+      arg_index: 0
+
+- pattern_id: frequency_set
+  address: /freq
+  type_tags: "f"
+  description: Set oscillator frequency in Hz
+  tags: [frequency, freq, pitch, hz]
+  manual_ref: "Cycling '74 Max OSC tutorials"
+  ranges:
+    frequency:
+      min: 20.0
+      max: 20000.0
+  slots:
+    - name: frequency
+      type: float
+      arg_index: 0
+
+- pattern_id: pan_set
+  address: /pan
+  type_tags: "f"
+  description: Set stereo pan position from -1.0 to 1.0
+  tags: [pan, balance, stereo]
+  manual_ref: "Cycling '74 Max OSC tutorials"
+  ranges:
+    pan:
+      min: -1.0
+      max: 1.0
+  slots:
+    - name: pan
+      type: float
+      arg_index: 0
+
+- pattern_id: tempo_set
+  address: /metro/tempo
+  type_tags: "f"
+  description: Set metronome tempo in BPM
+  tags: [tempo, bpm, metro, metronome]
+  manual_ref: "Cycling '74 Max OSC tutorials"
+  ranges:
+    tempo:
+      min: 20.0
+      max: 300.0
+  slots:
+    - name: tempo
+      type: float
+      arg_index: 0
+
+- pattern_id: mute_on
+  address: /mute
+  type_tags: "i"
+  description: Mute audio output
+  tags: [mute, silence, off]
+  manual_ref: "Cycling '74 udpreceive — OSC int control"
+  ranges:
+    mute:
+      min: 0
+      max: 1
+  slots:
+    - name: mute
+      type: int
+      arg_index: 0
+
+- pattern_id: mute_off
+  address: /unmute
+  type_tags: "i"
+  description: Unmute audio output
+  tags: [unmute, on]
+  manual_ref: "Cycling '74 udpreceive — OSC int control"
+  ranges:
+    unmute:
+      min: 0
+      max: 1
+  slots:
+    - name: unmute
+      type: int
+      arg_index: 0
+
+- pattern_id: transport_start
+  address: /transport/start
+  type_tags: ""
+  description: Start transport playback
+  tags: [start, play, transport, go]
+  manual_ref: "Cycling '74 Max UDP networking tutorial"
+
+- pattern_id: transport_stop
+  address: /transport/stop
+  type_tags: ""
+  description: Stop transport playback
+  tags: [stop, transport, halt]
+  manual_ref: "Cycling '74 Max UDP networking tutorial"
+
+- pattern_id: bypass_on
+  address: /bypass
+  type_tags: "i"
+  description: Enable effect bypass
+  tags: [bypass, mute, effect]
+  manual_ref: "Cycling '74 Max OSC tutorials"
+  ranges:
+    bypass:
+      min: 0
+      max: 1
+  slots:
+    - name: bypass
+      type: int
+      arg_index: 0
+
+- pattern_id: record_start
+  address: /record/start
+  type_tags: ""
+  description: Start recording
+  tags: [record, start, capture]
+  manual_ref: "Cycling '74 Max UDP networking tutorial"
+
+- pattern_id: record_stop
+  address: /record/stop
+  type_tags: ""
+  description: Stop recording
+  tags: [record, stop, capture]
+  manual_ref: "Cycling '74 Max UDP networking tutorial"

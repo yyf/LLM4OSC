@@ -1,0 +1,10 @@
+{
+  "id": "nl_gain_50pct",
+  "nl": "set gain to 50%",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "gain_set",
+    "address": "/gain",
+    "args": [0.5]
+  }
+}

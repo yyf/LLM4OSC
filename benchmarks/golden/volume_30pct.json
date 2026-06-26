@@ -1,0 +1,14 @@
+{
+  "id": "volume_30pct",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "master_volume",
+    "address": "/volume",
+    "type_tags": "f",
+    "args": [0.3]
+  },
+  "expect": { "address": "/volume", "args": [0.3] }
+}

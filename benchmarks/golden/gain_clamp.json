@@ -1,0 +1,15 @@
+{
+  "id": "gain_clamp",
+  "pipeline_only": true,
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "gain_set",
+    "address": "/gain",
+    "type_tags": "f",
+    "args": [1.5]
+  },
+  "expect": { "address": "/gain", "args": [1.0] }
+}

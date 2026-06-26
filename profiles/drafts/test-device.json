@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "device_id": "test-device",
+  "profile_version": "draft",
+  "patterns": [
+    {
+      "pattern_id": "test_ping",
+      "address": "/ping",
+      "type_tags": "",
+      "description": "Ping test pattern",
+      "ranges": {},
+      "slots": [],
+      "tags": [
+        "ping"
+      ],
+      "manual_ref": null
+    }
+  ],
+  "manual_sources": [],
+  "reviewed_at": null,
+  "reviewed_by": null
+}

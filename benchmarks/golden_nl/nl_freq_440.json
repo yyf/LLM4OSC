@@ -1,0 +1,10 @@
+{
+  "id": "nl_freq_440",
+  "nl": "set frequency to 440",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "frequency_set",
+    "address": "/freq",
+    "args": [440.0]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "freq_1000",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "frequency_set",
+    "address": "/freq",
+    "type_tags": "f",
+    "args": [1000.0]
+  },
+  "expect": { "address": "/freq", "args": [1000.0] }
+}

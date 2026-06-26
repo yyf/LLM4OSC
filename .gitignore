@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.swp
+.DS_Store
+datasets/manuals/.venv/
+datasets/manuals/pdfs/*.pdf
+docs/internal/*.pdf
+docs/internal/*.xlsx

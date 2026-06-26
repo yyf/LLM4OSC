@@ -2,8 +2,6 @@
 
 Turn natural language into **validated Open Sound Control (OSC)** — locally, deterministically, and reliably.
 
-## How it works
-
 ```
 device profile  +  natural language
         ↓
@@ -12,71 +10,66 @@ device profile  +  natural language
    validate → encode → OSC
 ```
 
-Models and rules **propose** structured intents; deterministic code **validates and sends**. Same validated intent → same OSC bytes. Ambiguous requests are refused, not guessed.
+Rules or a small local LLM **propose** structured intents; deterministic code **validates and sends**. Same validated intent → same OSC bytes. Ambiguous requests are refused, not guessed.
 
 ## Install
 
 ```bash
-cd LLM4OSC
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
-Optional **Qwen2-0.5B** local inference (~1 GB download on first run):
+Optional **Qwen2-0.5B** (`--backend b1` / `b2`):
 
 ```bash
 python -m pip install -e ".[dev,llm]"
 ```
 
-Without activating the venv:
-
-```bash
-python3 -m pip install -e ".[dev]"
-# or: pip3 install -e ".[dev]"
-```
-
 ## Quick start
 
 ```bash
-# List patterns in the Max/MSP hero profile
 llm4osc profile list-patterns --device max-msp
-
-# Natural language → preview → send (dry run, no UDP)
-llm4osc send --device max-msp --nl "set gain to 50%" --dry-run -y
-
-# Live send (Max udpreceive on port 7400, or scripts/osc_listen.py)
-llm4osc send --device max-msp --nl "set gain to 50%" -y
-
-# B0 benchmark scorecard
-llm4osc score --write benchmarks/results/baseline.json
-
-# Qwen zero-shot (B1) or few-shot (B2) — still validated by Tier 3
-llm4osc send --device max-msp --nl "set gain to 50%" --backend b1 --dry-run -y
-llm4osc score --backend b1
+llm4osc send --device max-msp --nl "set gain to 50%" --dry-run -y   # preview only
+llm4osc send --device max-msp --nl "set gain to 50%" -y              # live UDP → 127.0.0.1:7400
+python scripts/osc_listen.py                                        # loopback listener
 ```
 
-Set `LLM4OSC_HOST` and `LLM4OSC_PORT` (default `127.0.0.1:7400`) for live UDP send.  
-Set `LLM4OSC_MODEL` to override the default `Qwen/Qwen2-0.5B-Instruct`.  
-Set `LLM4OSC_DEBUG=1` to print raw Qwen output on stderr when using `--backend b1` or `b2`.
+Max/MSP: add `udpreceive 7400` in a patch. Set `LLM4OSC_HOST` / `LLM4OSC_PORT` to override defaults.
 
-Listen for packets:
+NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot).  
+`LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.
 
-```bash
-python scripts/osc_listen.py
-```
+## Benchmark results (Max/MSP hero profile)
 
-## Tests
+Frozen suite: 8 NL + 3 refusal cases — see `benchmarks/golden_nl/` and `benchmarks/golden_refusal/`.
+
+| Metric | B0 (rules) | B1 (Qwen2-0.5B) |
+|--------|------------|-----------------|
+| Semantic accuracy | **100%** | 25% |
+| Wrong-send rate | **0%** | 9.1% |
+| Refusal recall | **100%** | 0% |
+| Latency p50 | **0.04 ms** | ~3.2 s |
+
+B0 passes all gates on this suite. B1 is experimental — use **B0 for demos and live control** until fine-tuning or more eval.
 
 ```bash
 pytest
+llm4osc score                    # B0
+llm4osc score --backend b1       # re-run B1 (requires [llm], model download)
 ```
 
-B0 gates (0 wrong sends, ≥90% semantic accuracy on NL goldens):
+Full scorecards: `benchmarks/results/baseline.json`, `benchmarks/results/b1.json`.
 
-```bash
-llm4osc score
-```
+## Layout
+
+| Path | Purpose |
+|------|---------|
+| `llm4osc/` | CLI, NL resolver, optional Qwen path |
+| `tier3/` | Validate → clamp → encode → send |
+| `profiles/committed/` | Versioned device patterns |
+| `benchmarks/` | Golden tests + scorecards |
+| `schemas/` | Intent and profile JSON Schema |
 
 ## License
 

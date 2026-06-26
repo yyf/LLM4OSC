@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm4osc.dev/schemas/profile_schema_v1.json",
+  "title": "LLM4OSC Device Profile Schema v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "device_id",
+    "profile_version",
+    "patterns"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "device_id": { "type": "string", "minLength": 1 },
+    "profile_version": { "type": "string", "minLength": 1 },
+    "manual_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref"],
+        "properties": {
+          "ref": { "type": "string", "minLength": 1 },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "reviewed_at": { "type": "string" },
+    "reviewed_by": { "type": "string" },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/pattern" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "pattern": {
+      "type": "object",
+      "required": [
+        "pattern_id",
+        "address",
+        "type_tags",
+        "description"
+      ],
+      "properties": {
+        "pattern_id": { "type": "string", "minLength": 1 },
+        "address": { "type": "string", "pattern": "^/" },
+        "type_tags": { "type": "string" },
+        "ranges": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["min", "max"],
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          }
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "arg_index"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["int", "float", "string"] },
+              "arg_index": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "description": { "type": "string", "minLength": 1 },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "manual_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

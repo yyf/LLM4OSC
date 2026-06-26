@@ -1,0 +1,14 @@
+{
+  "id": "bypass_on",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "bypass_on",
+    "address": "/bypass",
+    "type_tags": "i",
+    "args": [1]
+  },
+  "expect": { "address": "/bypass", "args": [1] }
+}

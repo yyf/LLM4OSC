@@ -1,0 +1,10 @@
+{
+  "id": "nl_volume_30pct",
+  "nl": "set master volume to 30%",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "master_volume",
+    "address": "/volume",
+    "args": [0.3]
+  }
+}

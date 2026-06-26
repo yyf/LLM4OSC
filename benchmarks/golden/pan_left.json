@@ -1,0 +1,14 @@
+{
+  "id": "pan_left",
+  "intent": {
+    "schema_version": "1.0",
+    "kind": "intent",
+    "device_id": "max-msp",
+    "profile_version": "prof_20260610_mvp0",
+    "pattern_id": "pan_set",
+    "address": "/pan",
+    "type_tags": "f",
+    "args": [-1.0]
+  },
+  "expect": { "address": "/pan", "args": [-1.0] }
+}

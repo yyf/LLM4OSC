@@ -1,0 +1,8 @@
+{
+  "id": "refuse_ambiguous_start",
+  "nl": "start",
+  "expect": {
+    "kind": "refusal",
+    "reason": "ambiguous_pattern"
+  }
+}
