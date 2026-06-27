@@ -1,0 +1,11 @@
+{
+  "id": "para_freq_440",
+  "literal_id": "nl_freq_440",
+  "nl": "A440 please",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "frequency_set",
+    "address": "/freq",
+    "args": [440.0]
+  }
+}

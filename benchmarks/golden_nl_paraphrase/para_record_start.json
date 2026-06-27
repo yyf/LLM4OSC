@@ -1,0 +1,11 @@
+{
+  "id": "para_record_start",
+  "literal_id": "nl_record_start",
+  "nl": "commence recording session",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "record_start",
+    "address": "/record/start",
+    "args": []
+  }
+}

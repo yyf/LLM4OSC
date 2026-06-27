@@ -1,0 +1,11 @@
+{
+  "id": "para_pan_center",
+  "literal_id": "nl_pan_center",
+  "nl": "center the stereo image",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "pan_set",
+    "address": "/pan",
+    "args": [0.0]
+  }
+}

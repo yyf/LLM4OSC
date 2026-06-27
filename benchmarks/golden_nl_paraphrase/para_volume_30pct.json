@@ -1,0 +1,11 @@
+{
+  "id": "para_volume_30pct",
+  "literal_id": "nl_volume_30pct",
+  "nl": "attenuate output to thirty percent",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "master_volume",
+    "address": "/volume",
+    "args": [0.3]
+  }
+}

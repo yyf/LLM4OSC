@@ -220,7 +220,12 @@ def cmd_score(args: argparse.Namespace) -> int:
     from llm4osc.scorecard import score
 
     try:
-        report = score(args.device, backend=args.backend, model_id=args.model)
+        report = score(
+            args.device,
+            backend=args.backend,
+            suite=args.suite,
+            model_id=args.model,
+        )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -232,6 +237,29 @@ def cmd_score(args: argparse.Namespace) -> int:
         print(f"Wrote {path}")
     print(text)
     return 0 if report["gates"]["passed"] else 1
+
+
+def cmd_score_compare(args: argparse.Namespace) -> int:
+    from llm4osc.scorecard import compare_track_c
+
+    backends = tuple(b.strip() for b in args.backends.split(",") if b.strip())  # type: ignore
+    try:
+        report = compare_track_c(
+            args.device,
+            backends=backends,  # type: ignore
+            model_id=args.model,
+        )
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    text = json.dumps(report, indent=2)
+    if args.write:
+        path = Path(args.write)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text + "\n", encoding="utf-8")
+        print(f"Wrote {path}")
+    print(text)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -318,6 +346,11 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("score", help="Run benchmark scorecard")
     s.add_argument("--device", default="max-msp")
     s.add_argument("--backend", choices=["b0", "b1", "b2"], default="b0")
+    s.add_argument(
+        "--suite",
+        choices=["full", "literal", "paraphrase"],
+        default="full",
+    )
     s.add_argument("--model", default=None)
     s.add_argument(
         "--write",
@@ -326,6 +359,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write JSON to path (e.g. benchmarks/results/baseline.json)",
     )
     s.set_defaults(func=cmd_score)
+
+    s = sub.add_parser(
+        "score-compare",
+        help="Track C: literal vs paraphrase across backends",
+    )
+    s.add_argument("--device", default="max-msp")
+    s.add_argument("--backends", default="b0,b1,b2")
+    s.add_argument("--model", default=None)
+    s.add_argument(
+        "--write",
+        type=str,
+        default="benchmarks/results/track_c.json",
+    )
+    s.set_defaults(func=cmd_score_compare)
 
     return parser
 

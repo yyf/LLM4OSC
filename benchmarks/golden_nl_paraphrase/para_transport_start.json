@@ -1,0 +1,11 @@
+{
+  "id": "para_transport_start",
+  "literal_id": "nl_transport_start",
+  "nl": "kick off playback",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "transport_start",
+    "address": "/transport/start",
+    "args": []
+  }
+}

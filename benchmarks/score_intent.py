@@ -14,6 +14,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Score NL resolver")
     parser.add_argument("--device", default="max-msp")
     parser.add_argument("--backend", choices=["b0", "b1", "b2"], default="b0")
+    parser.add_argument(
+        "--suite",
+        choices=["full", "literal", "paraphrase"],
+        default="full",
+        help="NL suite: full=literal+refusal (default), literal, paraphrase",
+    )
     parser.add_argument("--model", default=None)
     parser.add_argument(
         "--write",
@@ -24,7 +30,12 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        report = score(args.device, backend=args.backend, model_id=args.model)
+        report = score(
+            args.device,
+            backend=args.backend,
+            suite=args.suite,
+            model_id=args.model,
+        )
     except Exception as exc:
         print(f"ERROR: {exc}")
         return 1

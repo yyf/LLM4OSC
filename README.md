@@ -42,24 +42,40 @@ NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen 
 
 ## Benchmark results (Max/MSP hero profile)
 
-Frozen suite: 8 NL + 3 refusal cases — see `benchmarks/golden_nl/` and `benchmarks/golden_refusal/`.
+### Literal suite (CI gates)
+
+Frozen suite: 8 NL + 3 refusal cases — `benchmarks/golden_nl/`, `benchmarks/golden_refusal/`.
 
 | Metric | B0 (rules) | B1 (Qwen2-0.5B) |
 |--------|------------|-----------------|
-| Semantic accuracy | **100%** | 25% |
+| Semantic accuracy | **100%** | 37.5% |
 | Wrong-send rate | **0%** | 9.1% |
 | Refusal recall | **100%** | 0% |
 | Latency p50 | **0.04 ms** | ~3.2 s |
 
-B0 passes all gates on this suite. B1 is experimental — use **B0 for demos and live control** until fine-tuning or more eval.
+B0 passes all gates on the literal suite. Use **B0 for demos and live control**.
+
+### Track C — paraphrase suite
+
+8 paraphrase NL cases (`benchmarks/golden_nl_paraphrase/`) — same intents as the literal suite, different wording.
+
+| Backend | Literal accuracy | Paraphrase accuracy | Gap |
+|---------|------------------|---------------------|-----|
+| **B0** | 100% | 0% | 100 pts |
+| B1 | 37.5% | 12.5% | 25 pts |
+| **B2** | 62.5% | **62.5%** | 0 pts |
+
+B2 (few-shot) beats B1 on paraphrase but still below the 90% gate. **LoRA go/no-go: yes** — large B0 paraphrase gap and no backend ≥90% on paraphrase.
 
 ```bash
 pytest
-llm4osc score                    # B0
-llm4osc score --backend b1       # re-run B1 (requires [llm], model download)
+llm4osc score                         # full literal + refusal (B0 gates)
+llm4osc score --suite paraphrase      # paraphrase only
+llm4osc score-compare --backends b0,b1,b2   # Track C (requires [llm] for B1/B2)
+python benchmarks/score_track_c.py
 ```
 
-Full scorecards: `benchmarks/results/baseline.json`, `benchmarks/results/b1.json`.
+Full reports: `benchmarks/results/baseline.json`, `benchmarks/results/track_c.json`.
 
 ## Layout
 
@@ -68,7 +84,7 @@ Full scorecards: `benchmarks/results/baseline.json`, `benchmarks/results/b1.json
 | `llm4osc/` | CLI, NL resolver, optional Qwen path |
 | `tier3/` | Validate → clamp → encode → send |
 | `profiles/committed/` | Versioned device patterns |
-| `benchmarks/` | Golden tests + scorecards |
+| `benchmarks/` | Golden tests, paraphrase suite, scorecards |
 | `schemas/` | Intent and profile JSON Schema |
 
 ## License

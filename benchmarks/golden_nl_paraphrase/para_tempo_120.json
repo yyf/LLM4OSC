@@ -1,0 +1,11 @@
+{
+  "id": "para_tempo_120",
+  "literal_id": "nl_tempo_120",
+  "nl": "run at 120 beats per minute",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "tempo_set",
+    "address": "/metro/tempo",
+    "args": [120.0]
+  }
+}

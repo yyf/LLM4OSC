@@ -15,6 +15,20 @@
   },
   {
     "device_id": "max-msp",
+    "nl": "make the level half",
+    "intent": {
+      "schema_version": "1.0",
+      "kind": "intent",
+      "device_id": "max-msp",
+      "profile_version": "prof_20260610_mvp0",
+      "pattern_id": "gain_set",
+      "address": "/gain",
+      "type_tags": "f",
+      "args": [0.5]
+    }
+  },
+  {
+    "device_id": "max-msp",
     "nl": "start transport playback",
     "intent": {
       "schema_version": "1.0",
@@ -25,6 +39,20 @@
       "address": "/transport/start",
       "type_tags": "",
       "args": []
+    }
+  },
+  {
+    "device_id": "max-msp",
+    "nl": "center the stereo image",
+    "intent": {
+      "schema_version": "1.0",
+      "kind": "intent",
+      "device_id": "max-msp",
+      "profile_version": "prof_20260610_mvp0",
+      "pattern_id": "pan_set",
+      "address": "/pan",
+      "type_tags": "f",
+      "args": [0.0]
     }
   },
   {
