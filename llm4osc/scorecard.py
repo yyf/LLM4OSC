@@ -93,6 +93,7 @@ def score(
     suite: SuiteName = "full",
     llm=None,
     model_id: str | None = None,
+    serve_url: str | None = None,
 ) -> dict[str, Any]:
     profile = find_committed_profile(device_id)
     nl_dir, refusal_dir, suite_label = _suite_dirs(suite)
@@ -110,6 +111,7 @@ def score(
             backend=backend,
             llm=llm,
             model_id=model_id,
+            serve_url=serve_url,
         )
 
     for case in nl_cases:
@@ -200,14 +202,25 @@ def compare_track_c(
     *,
     backends: tuple[Backend, ...] = ("b0", "b1", "b2"),
     model_id: str | None = None,
+    serve_url: str | None = None,
 ) -> dict[str, Any]:
     """Score literal and paraphrase suites for each backend (Track C)."""
     by_backend: dict[str, dict[str, Any]] = {}
     for backend in backends:
         by_backend[backend] = {
-            "literal": score(device_id, backend=backend, suite="literal", model_id=model_id),
+            "literal": score(
+                device_id,
+                backend=backend,
+                suite="literal",
+                model_id=model_id,
+                serve_url=serve_url,
+            ),
             "paraphrase": score(
-                device_id, backend=backend, suite="paraphrase", model_id=model_id
+                device_id,
+                backend=backend,
+                suite="paraphrase",
+                model_id=model_id,
+                serve_url=serve_url,
             ),
         }
 

@@ -36,6 +36,11 @@ def main() -> int:
     )
     parser.add_argument("--model", default=None)
     parser.add_argument(
+        "--serve-url",
+        default=None,
+        help="Use llm4osc serve (or set LLM4OSC_SERVE_URL)",
+    )
+    parser.add_argument(
         "--write",
         type=Path,
         default=None,
@@ -51,7 +56,12 @@ def main() -> int:
         return 1
 
     try:
-        report = compare_track_c(args.device, backends=backends, model_id=args.model)  # type: ignore
+        report = compare_track_c(
+            args.device,
+            backends=backends,  # type: ignore
+            model_id=args.model,
+            serve_url=args.serve_url,
+        )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

@@ -40,6 +40,22 @@ Max/MSP: add `udpreceive 7400` in a patch. Set `LLM4OSC_HOST` / `LLM4OSC_PORT` t
 NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot).  
 `LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.
 
+### LLM serve (B1/B2)
+
+Load Qwen **once** and reuse across CLI calls:
+
+```bash
+# Terminal 1 — loads model at startup (~few seconds once cached)
+llm4osc serve
+
+# Terminal 2 — talks to server instead of reloading weights
+export LLM4OSC_SERVE_URL=http://127.0.0.1:8765
+llm4osc send --device max-msp --nl "set gain to 50%" --backend b1 --dry-run -y
+llm4osc score-compare --backends b0,b1,b2
+```
+
+Or pass `--serve-url http://127.0.0.1:8765` per command. B0 ignores the server (rules only).
+
 ## Benchmark results (Max/MSP hero profile)
 
 ### Literal suite (CI gates)

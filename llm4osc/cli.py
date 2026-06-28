@@ -179,6 +179,7 @@ def cmd_send(args: argparse.Namespace) -> int:
             profile,
             backend=args.backend,
             model_id=args.model,
+            serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -225,6 +226,7 @@ def cmd_score(args: argparse.Namespace) -> int:
             backend=args.backend,
             suite=args.suite,
             model_id=args.model,
+            serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -248,6 +250,7 @@ def cmd_score_compare(args: argparse.Namespace) -> int:
             args.device,
             backends=backends,  # type: ignore
             model_id=args.model,
+            serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -260,6 +263,32 @@ def cmd_score_compare(args: argparse.Namespace) -> int:
         print(f"Wrote {path}")
     print(text)
     return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    from llm4osc.serve import run_server
+
+    try:
+        run_server(
+            args.host,
+            args.port,
+            model_id=args.model,
+            preload=not args.no_preload,
+        )
+    except KeyboardInterrupt:
+        return 0
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _add_serve_url_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--serve-url",
+        default=None,
+        help="Use running llm4osc serve (or set LLM4OSC_SERVE_URL)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -341,6 +370,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--preview", action="store_true", default=True)
     s.add_argument("--yes", "-y", action="store_true", help="Skip send confirmation")
     s.add_argument("--dry-run", action="store_true")
+    _add_serve_url_arg(s)
     s.set_defaults(func=cmd_send)
 
     s = sub.add_parser("score", help="Run benchmark scorecard")
@@ -358,6 +388,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Write JSON to path (e.g. benchmarks/results/baseline.json)",
     )
+    _add_serve_url_arg(s)
     s.set_defaults(func=cmd_score)
 
     s = sub.add_parser(
@@ -372,7 +403,19 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         default="benchmarks/results/track_c.json",
     )
+    _add_serve_url_arg(s)
     s.set_defaults(func=cmd_score_compare)
+
+    s = sub.add_parser("serve", help="Keep Qwen loaded; HTTP resolve API")
+    s.add_argument("--host", default="127.0.0.1")
+    s.add_argument("--port", type=int, default=8765)
+    s.add_argument("--model", default=None)
+    s.add_argument(
+        "--no-preload",
+        action="store_true",
+        help="Skip model load at startup (load on first b1/b2 request)",
+    )
+    s.set_defaults(func=cmd_serve)
 
     return parser
 

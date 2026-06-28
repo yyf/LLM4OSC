@@ -86,9 +86,23 @@ def resolve_nl(
     backend: Backend = "b0",
     llm: IntentLLM | None = None,
     model_id: str | None = None,
+    serve_url: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
     if backend == "b0":
         return resolve_nl_b0(text, profile)
+
+    from llm4osc.serve import resolve_remote, serve_url as _serve_url
+
+    url = _serve_url(serve_url)
+    if url and llm is None:
+        return resolve_remote(
+            url,
+            text,
+            profile.device_id,
+            backend=backend,
+            model_id=model_id,
+        )
+
     return resolve_nl_llm(
         text,
         profile,
