@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-27T05:39:34.477640+00:00",
+  "baseline": "B0",
+  "suite": "paraphrase",
+  "device_id": "max-msp",
+  "profile_version": "prof_20260610_mvp0",
+  "counts": {
+    "nl_cases": 8,
+    "refusal_cases": 0
+  },
+  "metrics": {
+    "semantic_accuracy": 0.0,
+    "wrong_send_rate": 0.0,
+    "refusal_precision": 1.0,
+    "refusal_recall": 1.0,
+    "reproducibility": 1.0,
+    "latency_ms_p50": 0.038,
+    "latency_ms_p95": 0.041
+  },
+  "gates": {
+    "wrong_send_rate_max": 0.0,
+    "semantic_accuracy_min": 0.9,
+    "passed": false
+  }
+}
