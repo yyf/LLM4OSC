@@ -37,10 +37,28 @@ python scripts/osc_listen.py                                        # loopback l
 
 Max/MSP: add `udpreceive 7400` in a patch. Set `LLM4OSC_HOST` / `LLM4OSC_PORT` to override defaults.
 
-NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot).  
-`LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.
+NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot), `b3` (Qwen + LoRA).  
+`LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.  
+`LLM4OSC_ADAPTER` points at a LoRA adapter directory for B3 (default: `models/qwen2-0.5b-osc/adapter` when present).
 
-### LLM serve (B1/B2)
+### LoRA training (B3)
+
+Generate synthetic, Tier-3-validated training data (excludes frozen golden NL):
+
+```bash
+llm4osc train-data --device max-msp
+python -m pip install -e ".[train]"
+python training/train_lora.py
+```
+
+Then score with the adapter:
+
+```bash
+llm4osc score --backend b3 --suite paraphrase --adapter models/qwen2-0.5b-osc/adapter
+llm4osc score-compare --backends b0,b1,b2,b3 --adapter models/qwen2-0.5b-osc/adapter
+```
+
+### LLM serve (B1/B2/B3)
 
 Load Qwen **once** and reuse across CLI calls:
 
@@ -98,6 +116,9 @@ Full reports: `benchmarks/results/baseline.json`, `benchmarks/results/track_c.js
 | Path | Purpose |
 |------|---------|
 | `llm4osc/` | CLI, NL resolver, optional Qwen path |
+| `training/` | LoRA fine-tune script |
+| `data/` | Generated train/val JSONL (gitignored) |
+| `models/qwen2-0.5b-osc/` | LoRA adapter + model card |
 | `tier3/` | Validate → clamp → encode → send |
 | `profiles/committed/` | Versioned device patterns |
 | `benchmarks/` | Golden tests, paraphrase suite, scorecards |

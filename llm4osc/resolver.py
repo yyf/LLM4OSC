@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from llm4osc.llm import IntentLLM, resolve_nl_llm
+from llm4osc.llm import IntentLLM, default_adapter_path, resolve_nl_llm
 from llm4osc.models import (
     DeviceProfile,
     RefusalIntent,
@@ -12,7 +12,7 @@ from llm4osc.models import (
 from llm4osc.retrieval import rank_patterns
 from llm4osc.slots import parse_float, parse_percent
 
-Backend = Literal["b0", "b1", "b2"]
+Backend = Literal["b0", "b1", "b2", "b3"]
 
 
 def _fill_args(pattern, text: str) -> list | None:
@@ -86,6 +86,7 @@ def resolve_nl(
     backend: Backend = "b0",
     llm: IntentLLM | None = None,
     model_id: str | None = None,
+    adapter_path: str | None = None,
     serve_url: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
     if backend == "b0":
@@ -101,7 +102,14 @@ def resolve_nl(
             profile.device_id,
             backend=backend,
             model_id=model_id,
+            adapter_path=adapter_path,
         )
+
+    resolved_adapter = adapter_path
+    if backend == "b3" and resolved_adapter is None:
+        default = default_adapter_path()
+        if default.is_dir():
+            resolved_adapter = str(default)
 
     return resolve_nl_llm(
         text,
@@ -109,4 +117,5 @@ def resolve_nl(
         few_shot=(backend == "b2"),
         llm=llm,
         model_id=model_id,
+        adapter_path=resolved_adapter,
     )

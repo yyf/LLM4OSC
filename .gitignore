@@ -15,3 +15,7 @@ datasets/manuals/.venv/
 datasets/manuals/pdfs/*.pdf
 docs/internal/*.pdf
 docs/internal/*.xlsx
+data/*.jsonl
+models/**/checkpoints/
+models/**/adapter/*.safetensors
+models/**/adapter/*.bin

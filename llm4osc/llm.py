@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 from typing import Any, Protocol
 
 from llm4osc.models import (
@@ -20,6 +21,7 @@ from llm4osc.retrieval import patterns_for_context
 from tier3.validate import ValidationError, validate_intent
 
 DEFAULT_MODEL_ID = "Qwen/Qwen2-0.5B-Instruct"
+DEFAULT_ADAPTER_DIR = repo_root() / "models" / "qwen2-0.5b-osc" / "adapter"
 FEW_SHOT_PATH = repo_root() / "benchmarks" / "few_shot_examples.json"
 
 
@@ -58,18 +60,46 @@ def load_few_shot_examples(device_id: str | None = None) -> list[dict[str, Any]]
 
 
 _MODEL: "QwenIntentModel | None" = None
+_MODEL_KEY: tuple[str, str | None] | None = None
 
 
-def get_qwen_model(model_id: str | None = None) -> "QwenIntentModel":
-    global _MODEL
+def _resolve_adapter_path(adapter_path: str | Path | None) -> Path | None:
+    raw = adapter_path or os.environ.get("LLM4OSC_ADAPTER")
+    if raw is None or str(raw).strip() == "":
+        return None
+    path = Path(raw)
+    if not path.is_absolute():
+        path = repo_root() / path
+    return path if path.is_dir() else None
+
+
+def default_adapter_path() -> Path:
+    return DEFAULT_ADAPTER_DIR
+
+
+def get_qwen_model(
+    model_id: str | None = None,
+    *,
+    adapter_path: str | Path | None = None,
+) -> "QwenIntentModel":
+    global _MODEL, _MODEL_KEY
     resolved = model_id or os.environ.get("LLM4OSC_MODEL", DEFAULT_MODEL_ID)
-    if _MODEL is None or _MODEL.model_id != resolved:
-        _MODEL = QwenIntentModel(resolved)
+    adapter = _resolve_adapter_path(adapter_path)
+    adapter_key = str(adapter) if adapter else None
+    key = (resolved, adapter_key)
+    if _MODEL is None or _MODEL_KEY != key:
+        _MODEL = QwenIntentModel(resolved, adapter_path=adapter)
+        _MODEL_KEY = key
     return _MODEL
 
 
 class QwenIntentModel:
-    def __init__(self, model_id: str = DEFAULT_MODEL_ID) -> None:
+    def __init__(
+        self,
+        model_id: str = DEFAULT_MODEL_ID,
+        *,
+        adapter_path: Path | None = None,
+    ) -> None:
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -79,6 +109,7 @@ class QwenIntentModel:
             ) from exc
 
         self.model_id = model_id
+        self.adapter_path = adapter_path
         self._torch = torch
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -92,6 +123,14 @@ class QwenIntentModel:
             model_id,
             torch_dtype=torch.float32,
         )
+        if adapter_path is not None:
+            try:
+                from peft import PeftModel
+            except ImportError as exc:
+                raise LLMNotAvailableError(
+                    "LoRA adapter requires peft. Run: python -m pip install -e '.[llm]'"
+                ) from exc
+            self.model = PeftModel.from_pretrained(self.model, str(adapter_path))
         self.model.to(self.device)
         self.model.eval()
         if self.tokenizer.pad_token_id is None:
@@ -217,6 +256,7 @@ def resolve_nl_llm(
     few_shot: bool = False,
     llm: IntentLLM | None = None,
     model_id: str | None = None,
+    adapter_path: str | Path | None = None,
     top_k: int = 8,
 ) -> SuccessIntent | RefusalIntent:
     patterns = patterns_for_context(text, profile.patterns, k=top_k)
@@ -228,7 +268,7 @@ def resolve_nl_llm(
         few_shot_examples=few_shot_examples,
     )
 
-    model = llm or get_qwen_model(model_id)
+    model = llm or get_qwen_model(model_id, adapter_path=adapter_path)
     last_error: str | None = None
 
     for attempt in range(2):

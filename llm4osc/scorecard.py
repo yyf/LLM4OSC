@@ -93,6 +93,7 @@ def score(
     suite: SuiteName = "full",
     llm=None,
     model_id: str | None = None,
+    adapter_path: str | None = None,
     serve_url: str | None = None,
 ) -> dict[str, Any]:
     profile = find_committed_profile(device_id)
@@ -111,6 +112,7 @@ def score(
             backend=backend,
             llm=llm,
             model_id=model_id,
+            adapter_path=adapter_path,
             serve_url=serve_url,
         )
 
@@ -163,7 +165,7 @@ def score(
     refusal_recall = refusal_tp / refusal_total if refusal_total else 1.0
     latencies_ms.sort()
 
-    baseline_label = {"b0": "B0", "b1": "B1", "b2": "B2"}[backend]
+    baseline_label = {"b0": "B0", "b1": "B1", "b2": "B2", "b3": "B3"}[backend]
 
     return {
         "schema_version": "1.0",
@@ -200,8 +202,9 @@ def score(
 def compare_track_c(
     device_id: str = "max-msp",
     *,
-    backends: tuple[Backend, ...] = ("b0", "b1", "b2"),
+    backends: tuple[Backend, ...] = ("b0", "b1", "b2", "b3"),
     model_id: str | None = None,
+    adapter_path: str | None = None,
     serve_url: str | None = None,
 ) -> dict[str, Any]:
     """Score literal and paraphrase suites for each backend (Track C)."""
@@ -213,6 +216,7 @@ def compare_track_c(
                 backend=backend,
                 suite="literal",
                 model_id=model_id,
+                adapter_path=adapter_path,
                 serve_url=serve_url,
             ),
             "paraphrase": score(
@@ -220,6 +224,7 @@ def compare_track_c(
                 backend=backend,
                 suite="paraphrase",
                 model_id=model_id,
+                adapter_path=adapter_path,
                 serve_url=serve_url,
             ),
         }
