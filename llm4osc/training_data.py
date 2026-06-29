@@ -207,6 +207,19 @@ def _refusal_specs(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]]:
     ]
 
 
+_WORD_PCT: dict[str, float] = {
+    "ten": 0.1,
+    "twenty": 0.2,
+    "thirty": 0.3,
+    "forty": 0.4,
+    "fifty": 0.5,
+    "sixty": 0.6,
+    "seventy": 0.7,
+    "eighty": 0.8,
+    "ninety": 0.9,
+}
+
+
 def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]]:
     """Near-golden phrasing variants (held-out goldens excluded at build time)."""
     rows: list[tuple[str, dict[str, Any]]] = []
@@ -226,8 +239,19 @@ def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, An
         ("attenuate output to fifty percent", "master_volume", 0.5),
         ("reduce master to sixty percent", "master_volume", 0.6),
         ("pull output down to twenty percent", "master_volume", 0.2),
+        ("attenuate master to thirty percent", "master_volume", 0.3),
+        ("attenuate master to forty percent", "master_volume", 0.4),
+        ("pull volume to thirty percent", "master_volume", 0.3),
+        ("reduce output to thirty percent", "master_volume", 0.3),
+        ("set gain to thirty percent", "gain_set", 0.3),
+        ("set gain to fifty percent", "gain_set", 0.5),
     ]:
         add(nl, pattern_id, [f])
+
+    for word, frac in _WORD_PCT.items():
+        add(f"attenuate output to {word} percent", "master_volume", [frac])
+        add(f"reduce master to {word} percent", "master_volume", [frac])
+        add(f"set gain to {word} percent", "gain_set", [frac])
 
     # frequency (short / musical phrasing — not literal "set frequency to N")
     for nl, freq in [
@@ -241,6 +265,11 @@ def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, An
         ("oscillator at 220 hertz", 220.0),
         ("pitch to 1000", 1000.0),
         ("A440 tone", 440.0),
+        ("A440 tone please", 440.0),
+        ("please concert A 440", 440.0),
+        ("concert pitch 440", 440.0),
+        ("tuning A4 440 hz", 440.0),
+        ("reference tone A440", 440.0),
     ]:
         add(nl, "frequency_set", [freq])
 
@@ -264,6 +293,11 @@ def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, An
         ("put the sound in the middle", 0.0),
         ("pan dead center", 0.0),
         ("balance in the center", 0.0),
+        ("center the stereo field", 0.0),
+        ("put stereo image in center", 0.0),
+        ("dead center stereo", 0.0),
+        ("center stereo balance", 0.0),
+        ("middle of the stereo field", 0.0),
         ("hard left panning", -1.0),
         ("full right stereo", 1.0),
         ("slightly left of center", -0.25),
@@ -274,12 +308,16 @@ def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, An
     # transport / record (idiomatic verbs)
     for nl, pid in [
         ("kick off the playback", "transport_start"),
+        ("kick off playback now", "transport_start"),
         ("fire up playback", "transport_start"),
         ("start playing back", "transport_start"),
+        ("start playback session", "transport_start"),
+        ("go playback", "transport_start"),
         ("pause the session transport", "transport_stop"),
         ("halt playback now", "transport_stop"),
         ("commence recording now", "record_start"),
         ("begin a recording pass", "record_start"),
+        ("commence recording session now", "record_start"),
     ]:
         pattern = next(p for p in profile.patterns if p.pattern_id == pid)
         args: list[Any] = [1] if pattern.type_tags == "i" else []

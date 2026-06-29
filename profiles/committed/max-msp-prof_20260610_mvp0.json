@@ -20,7 +20,7 @@
       "address": "/gain",
       "type_tags": "f",
       "description": "Set signal gain level from 0.0 to 1.0",
-      "tags": ["gain", "level", "amplitude"],
+      "tags": ["gain", "level", "amplitude", "half", "percent"],
       "manual_ref": "Cycling '74 udpreceive — OSC float control",
       "ranges": { "gain": { "min": 0.0, "max": 1.0 } },
       "slots": [{ "name": "gain", "type": "float", "arg_index": 0 }]
@@ -30,7 +30,7 @@
       "address": "/volume",
       "type_tags": "f",
       "description": "Set master output volume from 0.0 to 1.0",
-      "tags": ["volume", "master", "output"],
+      "tags": ["volume", "master", "output", "attenuate", "percent"],
       "manual_ref": "Cycling '74 udpreceive — OSC float control",
       "ranges": { "volume": { "min": 0.0, "max": 1.0 } },
       "slots": [{ "name": "volume", "type": "float", "arg_index": 0 }]
@@ -40,7 +40,7 @@
       "address": "/freq",
       "type_tags": "f",
       "description": "Set oscillator frequency in Hz",
-      "tags": ["frequency", "freq", "pitch", "hz"],
+      "tags": ["frequency", "freq", "pitch", "hz", "a440", "concert", "oscillator", "hertz"],
       "manual_ref": "Cycling '74 Max OSC tutorials",
       "ranges": { "frequency": { "min": 20.0, "max": 20000.0 } },
       "slots": [{ "name": "frequency", "type": "float", "arg_index": 0 }]
@@ -50,7 +50,7 @@
       "address": "/pan",
       "type_tags": "f",
       "description": "Set stereo pan position from -1.0 to 1.0",
-      "tags": ["pan", "balance", "stereo"],
+      "tags": ["pan", "balance", "stereo", "center", "image", "middle"],
       "manual_ref": "Cycling '74 Max OSC tutorials",
       "ranges": { "pan": { "min": -1.0, "max": 1.0 } },
       "slots": [{ "name": "pan", "type": "float", "arg_index": 0 }]
@@ -60,7 +60,7 @@
       "address": "/metro/tempo",
       "type_tags": "f",
       "description": "Set metronome tempo in BPM",
-      "tags": ["tempo", "bpm", "metro", "metronome"],
+      "tags": ["tempo", "bpm", "metro", "metronome", "beats", "minute"],
       "manual_ref": "Cycling '74 Max OSC tutorials",
       "ranges": { "tempo": { "min": 20.0, "max": 300.0 } },
       "slots": [{ "name": "tempo", "type": "float", "arg_index": 0 }]
@@ -90,7 +90,7 @@
       "address": "/transport/start",
       "type_tags": "",
       "description": "Start transport playback",
-      "tags": ["start", "play", "transport", "go"],
+      "tags": ["start", "play", "transport", "go", "kick", "playback"],
       "manual_ref": "Cycling '74 Max UDP networking tutorial",
       "ranges": {},
       "slots": []
@@ -100,7 +100,7 @@
       "address": "/transport/stop",
       "type_tags": "",
       "description": "Stop transport playback",
-      "tags": ["stop", "transport", "halt"],
+      "tags": ["stop", "transport", "halt", "pause", "playback"],
       "manual_ref": "Cycling '74 Max UDP networking tutorial",
       "ranges": {},
       "slots": []
@@ -120,7 +120,7 @@
       "address": "/record/start",
       "type_tags": "",
       "description": "Start recording",
-      "tags": ["record", "start", "capture"],
+      "tags": ["record", "start", "capture", "commence", "session"],
       "manual_ref": "Cycling '74 Max UDP networking tutorial",
       "ranges": {},
       "slots": []

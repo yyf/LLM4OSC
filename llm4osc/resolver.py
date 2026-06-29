@@ -10,32 +10,13 @@ from llm4osc.models import (
     SuccessIntent,
 )
 from llm4osc.retrieval import rank_patterns
-from llm4osc.slots import parse_float, parse_percent
+from llm4osc.slots import fill_pattern_args
 
 Backend = Literal["b0", "b1", "b2", "b3"]
 
 
 def _fill_args(pattern, text: str) -> list | None:
-    if not pattern.type_tags:
-        return []
-    if len(pattern.type_tags) == 1 and pattern.type_tags == "f":
-        pct = parse_percent(text)
-        if pct is not None:
-            return [pct]
-        val = parse_float(text)
-        if val is not None:
-            slot_name = pattern.slots[0].name if pattern.slots else None
-            range_spec = pattern.ranges.get(slot_name) if slot_name else None
-            if val > 1.0 and "%" not in text and (range_spec is None or range_spec.max <= 1.0):
-                return [val / 100.0]
-            return [val]
-        return None
-    if len(pattern.type_tags) == 1 and pattern.type_tags == "i":
-        val = parse_float(text)
-        if val is not None:
-            return [int(val)]
-        return None
-    return None
+    return fill_pattern_args(pattern, text)
 
 
 def resolve_nl_b0(text: str, profile: DeviceProfile) -> SuccessIntent | RefusalIntent:

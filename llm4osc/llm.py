@@ -17,7 +17,8 @@ from llm4osc.models import (
 )
 from llm4osc.profile import repo_root
 from llm4osc.prompt import build_messages
-from llm4osc.retrieval import patterns_for_context
+from llm4osc.retrieval import patterns_for_context, rank_patterns
+from llm4osc.slots import fill_pattern_args, normalize_unit_float_args
 from tier3.validate import ValidationError, validate_intent
 
 DEFAULT_MODEL_ID = "Qwen/Qwen2-0.5B-Instruct"
@@ -228,9 +229,51 @@ def _enrich_from_profile(data: dict[str, Any], profile: DeviceProfile) -> None:
     data.setdefault("args", [])
 
 
+def _refine_intent_with_nl(
+    data: dict[str, Any],
+    profile: DeviceProfile,
+    nl: str,
+) -> None:
+    """Profile-driven correction: retrieval + deterministic slot fill."""
+    if data.get("kind") != "intent":
+        return
+
+    ranked = rank_patterns(nl, profile.patterns)
+    if not ranked:
+        return
+
+    top_pattern, top_score = ranked[0]
+    llm_pid = data.get("pattern_id")
+    llm_score = next((s for p, s in ranked if p.pattern_id == llm_pid), 0)
+
+    pattern = next(
+        (p for p in profile.patterns if p.pattern_id == llm_pid),
+        None,
+    )
+    if (
+        top_score >= 3
+        and top_pattern.pattern_id != llm_pid
+        and (llm_score == 0 or top_score >= llm_score + 3)
+    ):
+        pattern = top_pattern
+        data["pattern_id"] = top_pattern.pattern_id
+        data["address"] = top_pattern.address
+        data["type_tags"] = top_pattern.type_tags
+
+    if pattern is None:
+        return
+
+    filled = fill_pattern_args(pattern, nl)
+    if filled is not None:
+        data["args"] = filled
+    elif data.get("args"):
+        data["args"] = normalize_unit_float_args(list(data["args"]), pattern)
+
+
 def _normalize_parsed(
     data: dict[str, Any],
     profile: DeviceProfile,
+    nl: str | None = None,
 ) -> dict[str, Any]:
     data.setdefault("schema_version", "1.0")
     data.setdefault("device_id", profile.device_id)
@@ -238,14 +281,17 @@ def _normalize_parsed(
     _infer_kind(data)
     _normalize_refusal_reason(data)
     _enrich_from_profile(data, profile)
+    if nl:
+        _refine_intent_with_nl(data, profile, nl)
     return data
 
 
 def _parse_llm_output(
     raw: str,
     profile: DeviceProfile,
+    nl: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
-    data = _normalize_parsed(extract_json_object(raw), profile)
+    data = _normalize_parsed(extract_json_object(raw), profile, nl)
     return parse_intent(data)
 
 
@@ -288,7 +334,7 @@ def resolve_nl_llm(
         try:
             raw = model.complete(attempt_messages)
             _debug(f"attempt {attempt + 1} raw output:\n{raw}")
-            parsed = _parse_llm_output(raw, profile)
+            parsed = _parse_llm_output(raw, profile, text)
         except Exception as exc:
             last_error = str(exc)
             _debug(f"attempt {attempt + 1} parse error: {last_error}")
