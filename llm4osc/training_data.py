@@ -207,6 +207,87 @@ def _refusal_specs(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]]:
     ]
 
 
+def _paraphrase_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]]:
+    """Near-golden phrasing variants (held-out goldens excluded at build time)."""
+    rows: list[tuple[str, dict[str, Any]]] = []
+
+    def add(nl: str, pattern_id: str, args: list[Any]) -> None:
+        rows.append((nl, intent_for_pattern(profile, pattern_id, args)))
+
+    # gain / volume (reinforce fractional & attenuate phrasing)
+    for nl, pattern_id, f in [
+        ("make the level a quarter", "gain_set", 0.25),
+        ("make the level three quarters", "gain_set", 0.75),
+        ("cut the level in half", "gain_set", 0.5),
+        ("bring level to half", "gain_set", 0.5),
+        ("level at fifty percent", "gain_set", 0.5),
+        ("attenuate output to twenty percent", "master_volume", 0.2),
+        ("attenuate output to forty percent", "master_volume", 0.4),
+        ("attenuate output to fifty percent", "master_volume", 0.5),
+        ("reduce master to sixty percent", "master_volume", 0.6),
+        ("pull output down to twenty percent", "master_volume", 0.2),
+    ]:
+        add(nl, pattern_id, [f])
+
+    # frequency (short / musical phrasing — not literal "set frequency to N")
+    for nl, freq in [
+        ("concert A at 440", 440.0),
+        ("A4 note please", 440.0),
+        ("440 cycles per second", 440.0),
+        ("tuning reference 440", 440.0),
+        ("give me 880 hz", 880.0),
+        ("B4 at 493 please", 493.0),
+        ("middle C at 261", 261.0),
+        ("oscillator at 220 hertz", 220.0),
+        ("pitch to 1000", 1000.0),
+        ("A440 tone", 440.0),
+    ]:
+        add(nl, "frequency_set", [freq])
+
+    # tempo (beats-per-minute phrasing)
+    for nl, tempo in [
+        ("run at 90 beats per minute", 90.0),
+        ("run at 100 beats per minute", 100.0),
+        ("run at 128 beats per minute", 128.0),
+        ("run at 140 beats per minute", 140.0),
+        ("play at 120 bpm", 120.0),
+        ("keep tempo at 160 beats per minute", 160.0),
+        ("metronome at 80 beats per minute", 80.0),
+        ("clock at 180 beats per minute", 180.0),
+    ]:
+        add(nl, "tempo_set", [tempo])
+
+    # pan (center / stereo image phrasing)
+    for nl, pan in [
+        ("center the mix", 0.0),
+        ("center the sound", 0.0),
+        ("put the sound in the middle", 0.0),
+        ("pan dead center", 0.0),
+        ("balance in the center", 0.0),
+        ("hard left panning", -1.0),
+        ("full right stereo", 1.0),
+        ("slightly left of center", -0.25),
+        ("slightly right of center", 0.25),
+    ]:
+        add(nl, "pan_set", [pan])
+
+    # transport / record (idiomatic verbs)
+    for nl, pid in [
+        ("kick off the playback", "transport_start"),
+        ("fire up playback", "transport_start"),
+        ("start playing back", "transport_start"),
+        ("pause the session transport", "transport_stop"),
+        ("halt playback now", "transport_stop"),
+        ("commence recording now", "record_start"),
+        ("begin a recording pass", "record_start"),
+    ]:
+        pattern = next(p for p in profile.patterns if p.pattern_id == pid)
+        args: list[Any] = [1] if pattern.type_tags == "i" else []
+        add(nl, pid, args)
+
+    return rows
+
+
 def _pattern_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]]:
     rows: list[tuple[str, dict[str, Any]]] = []
 
@@ -243,6 +324,7 @@ def _pattern_examples(profile: DeviceProfile) -> list[tuple[str, dict[str, Any]]
             rows.append((nl, intent_for_pattern(profile, pattern_id, args)))
 
     rows.extend(_refusal_specs(profile))
+    rows.extend(_paraphrase_examples(profile))
     return rows
 
 
