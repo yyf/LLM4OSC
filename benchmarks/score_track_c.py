@@ -31,10 +31,11 @@ def main() -> int:
     parser.add_argument("--device", default="max-msp")
     parser.add_argument(
         "--backends",
-        default="b0,b1,b2",
-        help="Comma-separated backends to score (default: b0,b1,b2)",
+        default="b0,b1,b2,b3",
+        help="Comma-separated backends to score (default: b0,b1,b2,b3)",
     )
     parser.add_argument("--model", default=None)
+    parser.add_argument("--adapter", default=None)
     parser.add_argument(
         "--serve-url",
         default=None,
@@ -49,7 +50,7 @@ def main() -> int:
     args = parser.parse_args()
 
     backends = tuple(b.strip() for b in args.backends.split(",") if b.strip())  # type: ignore
-    valid = {"b0", "b1", "b2"}
+    valid = {"b0", "b1", "b2", "b3"}
     bad = [b for b in backends if b not in valid]
     if bad:
         print(f"ERROR: invalid backends: {bad}", file=sys.stderr)
@@ -60,6 +61,7 @@ def main() -> int:
             args.device,
             backends=backends,  # type: ignore
             model_id=args.model,
+            adapter_path=args.adapter,
             serve_url=args.serve_url,
         )
     except Exception as exc:

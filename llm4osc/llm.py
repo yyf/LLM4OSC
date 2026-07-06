@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 from typing import Any, Protocol
 
 from llm4osc.models import (
@@ -16,10 +17,12 @@ from llm4osc.models import (
 )
 from llm4osc.profile import repo_root
 from llm4osc.prompt import build_messages
-from llm4osc.retrieval import patterns_for_context
+from llm4osc.retrieval import patterns_for_context, rank_patterns
+from llm4osc.slots import fill_pattern_args, normalize_unit_float_args
 from tier3.validate import ValidationError, validate_intent
 
 DEFAULT_MODEL_ID = "Qwen/Qwen2-0.5B-Instruct"
+DEFAULT_ADAPTER_DIR = repo_root() / "models" / "qwen2-0.5b-osc" / "adapter"
 FEW_SHOT_PATH = repo_root() / "benchmarks" / "few_shot_examples.json"
 
 
@@ -58,18 +61,46 @@ def load_few_shot_examples(device_id: str | None = None) -> list[dict[str, Any]]
 
 
 _MODEL: "QwenIntentModel | None" = None
+_MODEL_KEY: tuple[str, str | None] | None = None
 
 
-def get_qwen_model(model_id: str | None = None) -> "QwenIntentModel":
-    global _MODEL
+def _resolve_adapter_path(adapter_path: str | Path | None) -> Path | None:
+    raw = adapter_path or os.environ.get("LLM4OSC_ADAPTER")
+    if raw is None or str(raw).strip() == "":
+        return None
+    path = Path(raw)
+    if not path.is_absolute():
+        path = repo_root() / path
+    return path if path.is_dir() else None
+
+
+def default_adapter_path() -> Path:
+    return DEFAULT_ADAPTER_DIR
+
+
+def get_qwen_model(
+    model_id: str | None = None,
+    *,
+    adapter_path: str | Path | None = None,
+) -> "QwenIntentModel":
+    global _MODEL, _MODEL_KEY
     resolved = model_id or os.environ.get("LLM4OSC_MODEL", DEFAULT_MODEL_ID)
-    if _MODEL is None or _MODEL.model_id != resolved:
-        _MODEL = QwenIntentModel(resolved)
+    adapter = _resolve_adapter_path(adapter_path)
+    adapter_key = str(adapter) if adapter else None
+    key = (resolved, adapter_key)
+    if _MODEL is None or _MODEL_KEY != key:
+        _MODEL = QwenIntentModel(resolved, adapter_path=adapter)
+        _MODEL_KEY = key
     return _MODEL
 
 
 class QwenIntentModel:
-    def __init__(self, model_id: str = DEFAULT_MODEL_ID) -> None:
+    def __init__(
+        self,
+        model_id: str = DEFAULT_MODEL_ID,
+        *,
+        adapter_path: Path | None = None,
+    ) -> None:
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -79,6 +110,7 @@ class QwenIntentModel:
             ) from exc
 
         self.model_id = model_id
+        self.adapter_path = adapter_path
         self._torch = torch
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -92,6 +124,14 @@ class QwenIntentModel:
             model_id,
             torch_dtype=torch.float32,
         )
+        if adapter_path is not None:
+            try:
+                from peft import PeftModel
+            except ImportError as exc:
+                raise LLMNotAvailableError(
+                    "LoRA adapter requires peft. Run: python -m pip install -e '.[llm]'"
+                ) from exc
+            self.model = PeftModel.from_pretrained(self.model, str(adapter_path))
         self.model.to(self.device)
         self.model.eval()
         if self.tokenizer.pad_token_id is None:
@@ -189,9 +229,51 @@ def _enrich_from_profile(data: dict[str, Any], profile: DeviceProfile) -> None:
     data.setdefault("args", [])
 
 
+def _refine_intent_with_nl(
+    data: dict[str, Any],
+    profile: DeviceProfile,
+    nl: str,
+) -> None:
+    """Profile-driven correction: retrieval + deterministic slot fill."""
+    if data.get("kind") != "intent":
+        return
+
+    ranked = rank_patterns(nl, profile.patterns)
+    if not ranked:
+        return
+
+    top_pattern, top_score = ranked[0]
+    llm_pid = data.get("pattern_id")
+    llm_score = next((s for p, s in ranked if p.pattern_id == llm_pid), 0)
+
+    pattern = next(
+        (p for p in profile.patterns if p.pattern_id == llm_pid),
+        None,
+    )
+    if (
+        top_score >= 3
+        and top_pattern.pattern_id != llm_pid
+        and (llm_score == 0 or top_score >= llm_score + 3)
+    ):
+        pattern = top_pattern
+        data["pattern_id"] = top_pattern.pattern_id
+        data["address"] = top_pattern.address
+        data["type_tags"] = top_pattern.type_tags
+
+    if pattern is None:
+        return
+
+    filled = fill_pattern_args(pattern, nl)
+    if filled is not None:
+        data["args"] = filled
+    elif data.get("args"):
+        data["args"] = normalize_unit_float_args(list(data["args"]), pattern)
+
+
 def _normalize_parsed(
     data: dict[str, Any],
     profile: DeviceProfile,
+    nl: str | None = None,
 ) -> dict[str, Any]:
     data.setdefault("schema_version", "1.0")
     data.setdefault("device_id", profile.device_id)
@@ -199,14 +281,17 @@ def _normalize_parsed(
     _infer_kind(data)
     _normalize_refusal_reason(data)
     _enrich_from_profile(data, profile)
+    if nl:
+        _refine_intent_with_nl(data, profile, nl)
     return data
 
 
 def _parse_llm_output(
     raw: str,
     profile: DeviceProfile,
+    nl: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
-    data = _normalize_parsed(extract_json_object(raw), profile)
+    data = _normalize_parsed(extract_json_object(raw), profile, nl)
     return parse_intent(data)
 
 
@@ -217,6 +302,7 @@ def resolve_nl_llm(
     few_shot: bool = False,
     llm: IntentLLM | None = None,
     model_id: str | None = None,
+    adapter_path: str | Path | None = None,
     top_k: int = 8,
 ) -> SuccessIntent | RefusalIntent:
     patterns = patterns_for_context(text, profile.patterns, k=top_k)
@@ -228,7 +314,7 @@ def resolve_nl_llm(
         few_shot_examples=few_shot_examples,
     )
 
-    model = llm or get_qwen_model(model_id)
+    model = llm or get_qwen_model(model_id, adapter_path=adapter_path)
     last_error: str | None = None
 
     for attempt in range(2):
@@ -248,7 +334,7 @@ def resolve_nl_llm(
         try:
             raw = model.complete(attempt_messages)
             _debug(f"attempt {attempt + 1} raw output:\n{raw}")
-            parsed = _parse_llm_output(raw, profile)
+            parsed = _parse_llm_output(raw, profile, text)
         except Exception as exc:
             last_error = str(exc)
             _debug(f"attempt {attempt + 1} parse error: {last_error}")

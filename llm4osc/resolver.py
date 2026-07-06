@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from llm4osc.llm import IntentLLM, resolve_nl_llm
+from llm4osc.llm import IntentLLM, default_adapter_path, resolve_nl_llm
 from llm4osc.models import (
     DeviceProfile,
     RefusalIntent,
@@ -10,32 +10,13 @@ from llm4osc.models import (
     SuccessIntent,
 )
 from llm4osc.retrieval import rank_patterns
-from llm4osc.slots import parse_float, parse_percent
+from llm4osc.slots import fill_pattern_args
 
-Backend = Literal["b0", "b1", "b2"]
+Backend = Literal["b0", "b1", "b2", "b3"]
 
 
 def _fill_args(pattern, text: str) -> list | None:
-    if not pattern.type_tags:
-        return []
-    if len(pattern.type_tags) == 1 and pattern.type_tags == "f":
-        pct = parse_percent(text)
-        if pct is not None:
-            return [pct]
-        val = parse_float(text)
-        if val is not None:
-            slot_name = pattern.slots[0].name if pattern.slots else None
-            range_spec = pattern.ranges.get(slot_name) if slot_name else None
-            if val > 1.0 and "%" not in text and (range_spec is None or range_spec.max <= 1.0):
-                return [val / 100.0]
-            return [val]
-        return None
-    if len(pattern.type_tags) == 1 and pattern.type_tags == "i":
-        val = parse_float(text)
-        if val is not None:
-            return [int(val)]
-        return None
-    return None
+    return fill_pattern_args(pattern, text)
 
 
 def resolve_nl_b0(text: str, profile: DeviceProfile) -> SuccessIntent | RefusalIntent:
@@ -86,6 +67,7 @@ def resolve_nl(
     backend: Backend = "b0",
     llm: IntentLLM | None = None,
     model_id: str | None = None,
+    adapter_path: str | None = None,
     serve_url: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
     if backend == "b0":
@@ -101,7 +83,14 @@ def resolve_nl(
             profile.device_id,
             backend=backend,
             model_id=model_id,
+            adapter_path=adapter_path,
         )
+
+    resolved_adapter = adapter_path
+    if backend == "b3" and resolved_adapter is None:
+        default = default_adapter_path()
+        if default.is_dir():
+            resolved_adapter = str(default)
 
     return resolve_nl_llm(
         text,
@@ -109,4 +98,5 @@ def resolve_nl(
         few_shot=(backend == "b2"),
         llm=llm,
         model_id=model_id,
+        adapter_path=resolved_adapter,
     )

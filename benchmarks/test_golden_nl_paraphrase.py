@@ -23,11 +23,12 @@ def test_paraphrase_fixture_shape(case_id: str, payload: dict) -> None:
     assert "pattern_id" in payload["expect"]
 
 
-def test_b0_paraphrase_gap_documents_llm_need() -> None:
-    """B0 should not solve the full paraphrase suite (Track C premise)."""
+def test_b0_paraphrase_passes_hero_suite() -> None:
+    """B0 passes the hero paraphrase suite with profile tags + slot parsers."""
     report = score("max-msp", backend="b0", suite="paraphrase")
     assert report["counts"]["nl_cases"] == 8
-    assert report["metrics"]["semantic_accuracy"] < 0.9
+    assert report["metrics"]["semantic_accuracy"] >= 0.9
+    assert report["metrics"]["wrong_send_rate"] == 0.0
 
 
 def test_track_c_compare_structure() -> None:

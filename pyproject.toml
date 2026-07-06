@@ -21,6 +21,16 @@ llm = [
     "torch>=2.0",
     "transformers>=4.40",
     "accelerate>=0.27",
+    "peft>=0.10",
+]
+train = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "accelerate>=0.27",
+    "peft>=0.10",
+    "datasets>=2.18",
+    "trl>=0.8",
+    "bitsandbytes>=0.43; platform_system=='Linux'",
 ]
 
 [project.scripts]

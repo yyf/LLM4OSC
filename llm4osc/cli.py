@@ -179,6 +179,7 @@ def cmd_send(args: argparse.Namespace) -> int:
             profile,
             backend=args.backend,
             model_id=args.model,
+            adapter_path=getattr(args, "adapter", None),
             serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
@@ -226,6 +227,7 @@ def cmd_score(args: argparse.Namespace) -> int:
             backend=args.backend,
             suite=args.suite,
             model_id=args.model,
+            adapter_path=getattr(args, "adapter", None),
             serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
@@ -250,6 +252,7 @@ def cmd_score_compare(args: argparse.Namespace) -> int:
             args.device,
             backends=backends,  # type: ignore
             model_id=args.model,
+            adapter_path=getattr(args, "adapter", None),
             serve_url=getattr(args, "serve_url", None),
         )
     except Exception as exc:
@@ -273,6 +276,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
             args.host,
             args.port,
             model_id=args.model,
+            adapter_path=getattr(args, "adapter", None),
             preload=not args.no_preload,
         )
     except KeyboardInterrupt:
@@ -281,6 +285,22 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     return 0
+
+
+def cmd_train_data(args: argparse.Namespace) -> int:
+    from llm4osc.training_data import generate_dataset
+
+    manifest = generate_dataset(args.device, output_dir=Path(args.output_dir))
+    _print_json(manifest)
+    return 0 if manifest["train_count"] > 0 else 1
+
+
+def _add_adapter_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--adapter",
+        default=None,
+        help="LoRA adapter path for b3 (or set LLM4OSC_ADAPTER)",
+    )
 
 
 def _add_serve_url_arg(parser: argparse.ArgumentParser) -> None:
@@ -358,9 +378,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--nl", required=True)
     s.add_argument(
         "--backend",
-        choices=["b0", "b1", "b2"],
+        choices=["b0", "b1", "b2", "b3"],
         default="b0",
-        help="b0=rules, b1=Qwen zero-shot, b2=Qwen few-shot",
+        help="b0=rules, b1=Qwen zero-shot, b2=Qwen few-shot, b3=Qwen+LoRA",
     )
     s.add_argument(
         "--model",
@@ -370,12 +390,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--preview", action="store_true", default=True)
     s.add_argument("--yes", "-y", action="store_true", help="Skip send confirmation")
     s.add_argument("--dry-run", action="store_true")
+    _add_adapter_arg(s)
     _add_serve_url_arg(s)
     s.set_defaults(func=cmd_send)
 
     s = sub.add_parser("score", help="Run benchmark scorecard")
     s.add_argument("--device", default="max-msp")
-    s.add_argument("--backend", choices=["b0", "b1", "b2"], default="b0")
+    s.add_argument("--backend", choices=["b0", "b1", "b2", "b3"], default="b0")
     s.add_argument(
         "--suite",
         choices=["full", "literal", "paraphrase"],
@@ -388,6 +409,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Write JSON to path (e.g. benchmarks/results/baseline.json)",
     )
+    _add_adapter_arg(s)
     _add_serve_url_arg(s)
     s.set_defaults(func=cmd_score)
 
@@ -396,13 +418,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Track C: literal vs paraphrase across backends",
     )
     s.add_argument("--device", default="max-msp")
-    s.add_argument("--backends", default="b0,b1,b2")
+    s.add_argument("--backends", default="b0,b1,b2,b3")
     s.add_argument("--model", default=None)
     s.add_argument(
         "--write",
         type=str,
         default="benchmarks/results/track_c.json",
     )
+    _add_adapter_arg(s)
     _add_serve_url_arg(s)
     s.set_defaults(func=cmd_score_compare)
 
@@ -410,12 +433,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8765)
     s.add_argument("--model", default=None)
+    _add_adapter_arg(s)
     s.add_argument(
         "--no-preload",
         action="store_true",
-        help="Skip model load at startup (load on first b1/b2 request)",
+        help="Skip model load at startup (load on first b1/b2/b3 request)",
     )
     s.set_defaults(func=cmd_serve)
+
+    s = sub.add_parser("train-data", help="Generate LoRA training JSONL")
+    s.add_argument("--device", default="max-msp")
+    s.add_argument("--output-dir", default="data")
+    s.set_defaults(func=cmd_train_data)
 
     return parser
 

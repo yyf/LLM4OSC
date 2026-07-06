@@ -1,0 +1,21 @@
+{
+  "base_model": "Qwen/Qwen2-0.5B-Instruct",
+  "adapter_path": "models/qwen2-0.5b-osc/adapter",
+  "adapter_source": "checkpoints/checkpoint-34 (1 epoch, lr=5e-5) + NL refine",
+  "train_rows": 270,
+  "val_rows": 67,
+  "data_hash": "b024d3472f9d",
+  "epochs_trained": 1,
+  "lora_r": 8,
+  "lora_alpha": 16,
+  "learning_rate": 5e-5,
+  "quantization": "none",
+  "device": "mps",
+  "eval_b3": {
+    "literal_semantic_accuracy": 1.0,
+    "paraphrase_semantic_accuracy": 1.0,
+    "wrong_send_count": 0,
+    "gates_passed": true,
+    "note": "LoRA proposes intent; retrieval + slot fill refine from NL (profile-driven)."
+  }
+}

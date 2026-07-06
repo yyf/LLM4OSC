@@ -8,7 +8,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from llm4osc.llm import get_qwen_model
+from llm4osc.llm import default_adapter_path, get_qwen_model
 from llm4osc.models import RefusalIntent, SuccessIntent, parse_intent
 from llm4osc.profile import find_committed_profile
 from llm4osc.resolver import Backend, resolve_nl
@@ -31,8 +31,8 @@ def handle_resolve(body: dict[str, Any]) -> dict[str, Any]:
 
     device_id = body.get("device_id", "max-msp")
     backend = body.get("backend", "b1")
-    if backend not in ("b0", "b1", "b2"):
-        raise ValueError("backend must be b0, b1, or b2")
+    if backend not in ("b0", "b1", "b2", "b3"):
+        raise ValueError("backend must be b0, b1, b2, or b3")
 
     profile = find_committed_profile(device_id)
     result = resolve_nl(
@@ -40,6 +40,7 @@ def handle_resolve(body: dict[str, Any]) -> dict[str, Any]:
         profile,
         backend=backend,  # type: ignore[arg-type]
         model_id=body.get("model_id"),
+        adapter_path=body.get("adapter_path"),
         serve_url=None,
     )
     return result.model_dump(mode="json")
@@ -52,6 +53,7 @@ def resolve_remote(
     *,
     backend: Backend = "b1",
     model_id: str | None = None,
+    adapter_path: str | None = None,
 ) -> SuccessIntent | RefusalIntent:
     payload = json.dumps(
         {
@@ -59,6 +61,7 @@ def resolve_remote(
             "nl": nl,
             "backend": backend,
             "model_id": model_id,
+            "adapter_path": adapter_path,
         }
     ).encode("utf-8")
     req = Request(
@@ -81,8 +84,15 @@ def resolve_remote(
     return parse_intent(data["result"])
 
 
-def preload_model(model_id: str | None = None) -> str:
-    model = get_qwen_model(model_id)
+def preload_model(
+    model_id: str | None = None,
+    *,
+    adapter_path: str | None = None,
+) -> str:
+    resolved_adapter = adapter_path
+    if resolved_adapter is None and default_adapter_path().is_dir():
+        resolved_adapter = str(default_adapter_path())
+    model = get_qwen_model(model_id, adapter_path=resolved_adapter)
     return model.model_id
 
 
@@ -97,6 +107,7 @@ def _json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[s
 
 class _ServeHandler(BaseHTTPRequestHandler):
     model_id: str | None = None
+    adapter_path: str | None = None
 
     def log_message(self, format: str, *args: Any) -> None:
         if os.environ.get("LLM4OSC_DEBUG", "").lower() in ("1", "true", "yes"):
@@ -110,6 +121,7 @@ class _ServeHandler(BaseHTTPRequestHandler):
                 {
                     "ok": True,
                     "model_id": getattr(self.server, "model_id", None),
+                    "adapter_path": getattr(self.server, "adapter_path", None),
                 },
             )
             return
@@ -135,17 +147,22 @@ def run_server(
     port: int = DEFAULT_SERVE_PORT,
     *,
     model_id: str | None = None,
+    adapter_path: str | None = None,
     preload: bool = True,
 ) -> None:
     if preload:
-        loaded = preload_model(model_id)
+        loaded = preload_model(model_id, adapter_path=adapter_path)
         print(f"Loaded model: {loaded}", file=sys.stderr)
+        if adapter_path or default_adapter_path().is_dir():
+            ap = adapter_path or str(default_adapter_path())
+            print(f"Adapter: {ap}", file=sys.stderr)
 
     server = ThreadingHTTPServer((host, port), _ServeHandler)
     server.model_id = model_id or os.environ.get("LLM4OSC_MODEL")  # type: ignore[attr-defined]
+    server.adapter_path = adapter_path or os.environ.get("LLM4OSC_ADAPTER")  # type: ignore[attr-defined]
     print(f"LLM4OSC serve listening on http://{host}:{port}", file=sys.stderr)
     print("  GET  /health", file=sys.stderr)
-    print("  POST /v1/resolve  {device_id, nl, backend, model_id?}", file=sys.stderr)
+    print("  POST /v1/resolve  {device_id, nl, backend, model_id?, adapter_path?}", file=sys.stderr)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

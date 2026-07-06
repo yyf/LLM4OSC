@@ -37,10 +37,28 @@ python scripts/osc_listen.py                                        # loopback l
 
 Max/MSP: add `udpreceive 7400` in a patch. Set `LLM4OSC_HOST` / `LLM4OSC_PORT` to override defaults.
 
-NL backends: `--backend b0` (rules, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot).  
-`LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.
+NL backends: `--backend b0` (rules + slot fill, default), `b1` (Qwen zero-shot), `b2` (Qwen few-shot), `b3` (Qwen + LoRA + NL refine).  
+`LLM4OSC_DEBUG=1` prints raw model output. `LLM4OSC_MODEL` overrides the Hugging Face model id.  
+`LLM4OSC_ADAPTER` points at a LoRA adapter directory for B3 (default: `models/qwen2-0.5b-osc/adapter` when present).
 
-### LLM serve (B1/B2)
+### LoRA training (B3)
+
+Generate synthetic, Tier-3-validated training data (excludes frozen golden NL):
+
+```bash
+llm4osc train-data --device max-msp
+python -m pip install -e ".[train]"
+python training/train_lora.py
+```
+
+Then score with the adapter:
+
+```bash
+llm4osc score --backend b3 --suite paraphrase --adapter models/qwen2-0.5b-osc/adapter
+llm4osc score-compare --backends b0,b1,b2,b3 --adapter models/qwen2-0.5b-osc/adapter
+```
+
+### LLM serve (B1/B2/B3)
 
 Load Qwen **once** and reuse across CLI calls:
 
@@ -58,46 +76,47 @@ Or pass `--serve-url http://127.0.0.1:8765` per command. B0 ignores the server (
 
 ## Benchmark results (Max/MSP hero profile)
 
-### Literal suite (CI gates)
+Frozen suites: 8 literal NL + 3 refusal (`benchmarks/golden_nl/`, `golden_refusal/`), 8 paraphrase NL (`golden_nl_paraphrase/`).  
+Ship gates: semantic accuracy ≥ **90%**, wrong-send rate **0%**.
 
-Frozen suite: 8 NL + 3 refusal cases — `benchmarks/golden_nl/`, `benchmarks/golden_refusal/`.
+### Track C summary
 
-| Metric | B0 (rules) | B1 (Qwen2-0.5B) |
-|--------|------------|-----------------|
-| Semantic accuracy | **100%** | 37.5% |
-| Wrong-send rate | **0%** | 9.1% |
-| Refusal recall | **100%** | 0% |
-| Latency p50 | **0.04 ms** | ~3.2 s |
+| Backend | Literal | Paraphrase | Wrong-send (para) | Latency p50 |
+|---------|---------|------------|-------------------|-------------|
+| **B0** (rules + slots) | **100%** | **100%** | **0%** | ~0.04 ms |
+| B1 (Qwen zero-shot) | 37.5% | 12.5% | 37.5% | ~3 s |
+| B2 (Qwen few-shot) | 62.5% | 62.5% | 12.5% | ~3 s |
+| **B3** (LoRA + refine) | **100%** | **100%** | **0%** | ~4 s (warm serve) |
 
-B0 passes all gates on the literal suite. Use **B0 for demos and live control**.
+**B0** passes all gates on literal and paraphrase — use for **demos and live control** (no GPU).  
+**B3** passes the same gates with LoRA + profile-driven NL refine (retrieval correction + slot fill). B1/B2 remain experimental baselines.
 
-### Track C — paraphrase suite
+After `llm4osc train-data` and `python training/train_lora.py`:
 
-8 paraphrase NL cases (`benchmarks/golden_nl_paraphrase/`) — same intents as the literal suite, different wording.
-
-| Backend | Literal accuracy | Paraphrase accuracy | Gap |
-|---------|------------------|---------------------|-----|
-| **B0** | 100% | 0% | 100 pts |
-| B1 | 37.5% | 12.5% | 25 pts |
-| **B2** | 62.5% | **62.5%** | 0 pts |
-
-B2 (few-shot) beats B1 on paraphrase but still below the 90% gate. **LoRA go/no-go: yes** — large B0 paraphrase gap and no backend ≥90% on paraphrase.
+```bash
+llm4osc serve --adapter models/qwen2-0.5b-osc/adapter
+export LLM4OSC_SERVE_URL=http://127.0.0.1:8765
+llm4osc score-compare --backends b0,b1,b2,b3 --adapter models/qwen2-0.5b-osc/adapter
+```
 
 ```bash
 pytest
 llm4osc score                         # full literal + refusal (B0 gates)
 llm4osc score --suite paraphrase      # paraphrase only
-llm4osc score-compare --backends b0,b1,b2   # Track C (requires [llm] for B1/B2)
+llm4osc score --backend b3 --suite paraphrase --adapter models/qwen2-0.5b-osc/adapter
 python benchmarks/score_track_c.py
 ```
 
-Full reports: `benchmarks/results/baseline.json`, `benchmarks/results/track_c.json`.
+Full reports: `benchmarks/results/track_c.json`, `models/qwen2-0.5b-osc/model_card.json`.
 
 ## Layout
 
 | Path | Purpose |
 |------|---------|
 | `llm4osc/` | CLI, NL resolver, optional Qwen path |
+| `training/` | LoRA fine-tune script |
+| `data/` | Generated train/val JSONL (gitignored) |
+| `models/qwen2-0.5b-osc/` | LoRA adapter + model card |
 | `tier3/` | Validate → clamp → encode → send |
 | `profiles/committed/` | Versioned device patterns |
 | `benchmarks/` | Golden tests, paraphrase suite, scorecards |
