@@ -61,17 +61,17 @@ export LLM4OSC_SERVE_URL=http://127.0.0.1:8765   # reuse in other shells
 
 ## Evaluation
 
-Frozen Max/MSP suite: 8 literal + 8 paraphrase + 3 refusal.  
+Frozen Max/MSP suite: 8 literal + 8 paraphrase + 4 refusal.  
 Gates: semantic accuracy ≥ 90%, **wrong-send rate 0%**.
 
 | Backend | Literal | Paraphrase | Wrong-send (para) | p50      |
 |---------|---------|------------|-------------------|----------|
 | **B0**  | 100%    | 100%       | 0%                | ~0.05 ms |
-| B1      | 37.5%   | 12.5%      | 37.5%             | ~3 s     |
-| B2      | 62.5%   | 62.5%      | 12.5%             | ~3 s     |
-| B3      | 100%†   | 100%       | 0%                | ~4 s     |
+| B1†     | 100%    | 100%       | 0%                | ~3.9 s   |
+| B2†     | 100%    | 100%       | 0%                | ~3.8 s   |
+| B3†     | 100%    | 100%       | 0%                | ~3.8 s   |
 
-†B3 literal+refusal: refusal recall gaps on frozen cases — use B0 in production.
+† B1–B3 scores include the **retrieval gate** (same refusal policy as B0). Use **B0** for live control — sub-ms latency, no GPU. Details: [`docs/evaluation.md`](docs/evaluation.md).
 
 ```bash
 pytest
@@ -80,7 +80,7 @@ llm4osc score --suite paraphrase
 llm4osc score-compare --backends b0,b1,b2,b3 --adapter models/qwen2-0.5b-osc/adapter
 ```
 
-[`benchmarks/results/track_c.json`](benchmarks/results/track_c.json) · [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md)
+[`docs/evaluation.md`](docs/evaluation.md) · [`benchmarks/results/track_c.json`](benchmarks/results/track_c.json) · [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md)
 
 ### Train B3 (optional)
 
