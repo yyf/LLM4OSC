@@ -229,6 +229,88 @@ def _enrich_from_profile(data: dict[str, Any], profile: DeviceProfile) -> None:
     data.setdefault("args", [])
 
 
+def _refusal_dict(
+    profile: DeviceProfile,
+    reason: RefusalReason,
+    message: str,
+    *,
+    candidates: list[str] | None = None,
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "schema_version": "1.0",
+        "kind": "refusal",
+        "device_id": profile.device_id,
+        "profile_version": profile.profile_version,
+        "reason": reason.value,
+        "message": message,
+    }
+    if candidates:
+        data["candidates"] = candidates
+    return data
+
+
+def apply_retrieval_gate(
+    data: dict[str, Any],
+    profile: DeviceProfile,
+    nl: str,
+) -> dict[str, Any]:
+    """Align B1–B3 with B0 retrieval policy before accepting an intent."""
+    if data.get("kind") == "refusal":
+        return data
+    if data.get("kind") != "intent":
+        return data
+
+    ranked = rank_patterns(nl, profile.patterns)
+    if not ranked or ranked[0][1] == 0:
+        return _refusal_dict(
+            profile,
+            RefusalReason.UNKNOWN_PATTERN,
+            "No matching control pattern found.",
+        )
+
+    top_score = ranked[0][1]
+    winners = [p for p, score in ranked if score == top_score]
+    if len(winners) > 1:
+        return _refusal_dict(
+            profile,
+            RefusalReason.AMBIGUOUS_PATTERN,
+            "Multiple patterns match. Be more specific.",
+            candidates=[f"pattern_id:{p.pattern_id}" for p in winners],
+        )
+
+    pattern_id = data.get("pattern_id")
+    pattern = next(
+        (p for p in profile.patterns if p.pattern_id == pattern_id),
+        None,
+    )
+    if pattern is None:
+        return _refusal_dict(
+            profile,
+            RefusalReason.UNKNOWN_PATTERN,
+            "No matching control pattern found.",
+        )
+
+    pid_score = next((s for p, s in ranked if p.pattern_id == pattern_id), 0)
+    if pid_score == 0:
+        return _refusal_dict(
+            profile,
+            RefusalReason.UNKNOWN_PATTERN,
+            "No matching control pattern found.",
+        )
+
+    filled = fill_pattern_args(pattern, nl)
+    if filled is not None:
+        data["args"] = filled
+    elif pattern.type_tags:
+        return _refusal_dict(
+            profile,
+            RefusalReason.MISSING_SLOT,
+            "Could not extract required parameter values from text.",
+        )
+
+    return data
+
+
 def _refine_intent_with_nl(
     data: dict[str, Any],
     profile: DeviceProfile,
@@ -283,6 +365,7 @@ def _normalize_parsed(
     _enrich_from_profile(data, profile)
     if nl:
         _refine_intent_with_nl(data, profile, nl)
+        data = apply_retrieval_gate(data, profile, nl)
     return data
 
 

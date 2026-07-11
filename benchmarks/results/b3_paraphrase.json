@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-29T07:51:07.861663+00:00",
+  "generated_at": "2026-07-07T21:45:19.493502+00:00",
   "baseline": "B3",
   "suite": "paraphrase",
   "device_id": "max-msp",
@@ -15,8 +15,8 @@
     "refusal_precision": 1.0,
     "refusal_recall": 1.0,
     "reproducibility": 1.0,
-    "latency_ms_p50": 3773.778,
-    "latency_ms_p95": 4368.905
+    "latency_ms_p50": 4134.603,
+    "latency_ms_p95": 4430.674
   },
   "gates": {
     "wrong_send_rate_max": 0.0,

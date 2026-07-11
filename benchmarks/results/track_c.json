@@ -1,127 +1,19 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-29T07:51:07.861710+00:00",
+  "generated_at": "2026-07-07T21:42:00.797145+00:00",
   "device_id": "max-msp",
   "backends": {
-    "b1": {
-      "literal": {
-        "schema_version": "1.0",
-        "generated_at": "2026-06-28T05:07:45.206973+00:00",
-        "baseline": "B1",
-        "suite": "literal",
-        "device_id": "max-msp",
-        "profile_version": "prof_20260610_mvp0",
-        "counts": {
-          "nl_cases": 8,
-          "refusal_cases": 3
-        },
-        "metrics": {
-          "semantic_accuracy": 0.375,
-          "wrong_send_rate": 0.2727,
-          "refusal_precision": 1.0,
-          "refusal_recall": 0.0,
-          "reproducibility": 1.0,
-          "latency_ms_p50": 2951.548,
-          "latency_ms_p95": 3822.543
-        },
-        "gates": {
-          "wrong_send_rate_max": 0.0,
-          "semantic_accuracy_min": 0.9,
-          "passed": false
-        }
-      },
-      "paraphrase": {
-        "schema_version": "1.0",
-        "generated_at": "2026-06-28T05:08:39.592257+00:00",
-        "baseline": "B1",
-        "suite": "paraphrase",
-        "device_id": "max-msp",
-        "profile_version": "prof_20260610_mvp0",
-        "counts": {
-          "nl_cases": 8,
-          "refusal_cases": 0
-        },
-        "metrics": {
-          "semantic_accuracy": 0.125,
-          "wrong_send_rate": 0.375,
-          "refusal_precision": 1.0,
-          "refusal_recall": 1.0,
-          "reproducibility": 1.0,
-          "latency_ms_p50": 2923.021,
-          "latency_ms_p95": 4004.689
-        },
-        "gates": {
-          "wrong_send_rate_max": 0.0,
-          "semantic_accuracy_min": 0.9,
-          "passed": false
-        }
-      }
-    },
-    "b2": {
-      "literal": {
-        "schema_version": "1.0",
-        "generated_at": "2026-06-28T05:10:01.052707+00:00",
-        "baseline": "B2",
-        "suite": "literal",
-        "device_id": "max-msp",
-        "profile_version": "prof_20260610_mvp0",
-        "counts": {
-          "nl_cases": 8,
-          "refusal_cases": 3
-        },
-        "metrics": {
-          "semantic_accuracy": 0.625,
-          "wrong_send_rate": 0.0909,
-          "refusal_precision": 1.0,
-          "refusal_recall": 0.3333,
-          "reproducibility": 1.0,
-          "latency_ms_p50": 3137.895,
-          "latency_ms_p95": 4998.378
-        },
-        "gates": {
-          "wrong_send_rate_max": 0.0,
-          "semantic_accuracy_min": 0.9,
-          "passed": false
-        }
-      },
-      "paraphrase": {
-        "schema_version": "1.0",
-        "generated_at": "2026-06-28T05:11:24.716608+00:00",
-        "baseline": "B2",
-        "suite": "paraphrase",
-        "device_id": "max-msp",
-        "profile_version": "prof_20260610_mvp0",
-        "counts": {
-          "nl_cases": 8,
-          "refusal_cases": 0
-        },
-        "metrics": {
-          "semantic_accuracy": 0.625,
-          "wrong_send_rate": 0.125,
-          "refusal_precision": 1.0,
-          "refusal_recall": 1.0,
-          "reproducibility": 1.0,
-          "latency_ms_p50": 2723.067,
-          "latency_ms_p95": 6259.767
-        },
-        "gates": {
-          "wrong_send_rate_max": 0.0,
-          "semantic_accuracy_min": 0.9,
-          "passed": false
-        }
-      }
-    },
     "b0": {
       "literal": {
         "schema_version": "1.0",
-        "generated_at": "2026-06-29T07:48:03.880007+00:00",
+        "generated_at": "2026-07-07T21:32:27.349962+00:00",
         "baseline": "B0",
         "suite": "literal",
         "device_id": "max-msp",
         "profile_version": "prof_20260610_mvp0",
         "counts": {
           "nl_cases": 8,
-          "refusal_cases": 3
+          "refusal_cases": 4
         },
         "metrics": {
           "semantic_accuracy": 1.0,
@@ -129,8 +21,8 @@
           "refusal_precision": 1.0,
           "refusal_recall": 1.0,
           "reproducibility": 1.0,
-          "latency_ms_p50": 0.048,
-          "latency_ms_p95": 0.226
+          "latency_ms_p50": 0.047,
+          "latency_ms_p95": 0.224
         },
         "gates": {
           "wrong_send_rate_max": 0.0,
@@ -140,7 +32,7 @@
       },
       "paraphrase": {
         "schema_version": "1.0",
-        "generated_at": "2026-06-29T07:48:03.881572+00:00",
+        "generated_at": "2026-07-07T21:32:27.353851+00:00",
         "baseline": "B0",
         "suite": "paraphrase",
         "device_id": "max-msp",
@@ -155,8 +47,116 @@
           "refusal_precision": 1.0,
           "refusal_recall": 1.0,
           "reproducibility": 1.0,
-          "latency_ms_p50": 0.045,
-          "latency_ms_p95": 0.061
+          "latency_ms_p50": 0.06,
+          "latency_ms_p95": 0.084
+        },
+        "gates": {
+          "wrong_send_rate_max": 0.0,
+          "semantic_accuracy_min": 0.9,
+          "passed": true
+        }
+      }
+    },
+    "b1": {
+      "literal": {
+        "schema_version": "1.0",
+        "generated_at": "2026-07-07T21:34:15.163492+00:00",
+        "baseline": "B1",
+        "suite": "literal",
+        "device_id": "max-msp",
+        "profile_version": "prof_20260610_mvp0",
+        "counts": {
+          "nl_cases": 8,
+          "refusal_cases": 4
+        },
+        "metrics": {
+          "semantic_accuracy": 1.0,
+          "wrong_send_rate": 0.0,
+          "refusal_precision": 1.0,
+          "refusal_recall": 1.0,
+          "reproducibility": 1.0,
+          "latency_ms_p50": 3683.712,
+          "latency_ms_p95": 11125.0
+        },
+        "gates": {
+          "wrong_send_rate_max": 0.0,
+          "semantic_accuracy_min": 0.9,
+          "passed": true
+        }
+      },
+      "paraphrase": {
+        "schema_version": "1.0",
+        "generated_at": "2026-07-07T21:35:40.029437+00:00",
+        "baseline": "B1",
+        "suite": "paraphrase",
+        "device_id": "max-msp",
+        "profile_version": "prof_20260610_mvp0",
+        "counts": {
+          "nl_cases": 8,
+          "refusal_cases": 0
+        },
+        "metrics": {
+          "semantic_accuracy": 1.0,
+          "wrong_send_rate": 0.0,
+          "refusal_precision": 1.0,
+          "refusal_recall": 1.0,
+          "reproducibility": 1.0,
+          "latency_ms_p50": 3852.002,
+          "latency_ms_p95": 4385.966
+        },
+        "gates": {
+          "wrong_send_rate_max": 0.0,
+          "semantic_accuracy_min": 0.9,
+          "passed": true
+        }
+      }
+    },
+    "b2": {
+      "literal": {
+        "schema_version": "1.0",
+        "generated_at": "2026-07-07T21:37:29.387102+00:00",
+        "baseline": "B2",
+        "suite": "literal",
+        "device_id": "max-msp",
+        "profile_version": "prof_20260610_mvp0",
+        "counts": {
+          "nl_cases": 8,
+          "refusal_cases": 4
+        },
+        "metrics": {
+          "semantic_accuracy": 1.0,
+          "wrong_send_rate": 0.0,
+          "refusal_precision": 1.0,
+          "refusal_recall": 1.0,
+          "reproducibility": 1.0,
+          "latency_ms_p50": 4265.403,
+          "latency_ms_p95": 5387.659
+        },
+        "gates": {
+          "wrong_send_rate_max": 0.0,
+          "semantic_accuracy_min": 0.9,
+          "passed": true
+        }
+      },
+      "paraphrase": {
+        "schema_version": "1.0",
+        "generated_at": "2026-07-07T21:38:58.830644+00:00",
+        "baseline": "B2",
+        "suite": "paraphrase",
+        "device_id": "max-msp",
+        "profile_version": "prof_20260610_mvp0",
+        "counts": {
+          "nl_cases": 8,
+          "refusal_cases": 0
+        },
+        "metrics": {
+          "semantic_accuracy": 1.0,
+          "wrong_send_rate": 0.0,
+          "refusal_precision": 1.0,
+          "refusal_recall": 1.0,
+          "reproducibility": 1.0,
+          "latency_ms_p50": 3827.197,
+          "latency_ms_p95": 5144.29
         },
         "gates": {
           "wrong_send_rate_max": 0.0,
@@ -168,33 +168,33 @@
     "b3": {
       "literal": {
         "schema_version": "1.0",
-        "generated_at": "2026-06-29T07:49:44.115821+00:00",
+        "generated_at": "2026-07-07T21:40:37.164456+00:00",
         "baseline": "B3",
         "suite": "literal",
         "device_id": "max-msp",
         "profile_version": "prof_20260610_mvp0",
         "counts": {
           "nl_cases": 8,
-          "refusal_cases": 3
+          "refusal_cases": 4
         },
         "metrics": {
           "semantic_accuracy": 1.0,
-          "wrong_send_rate": 0.2727,
+          "wrong_send_rate": 0.0,
           "refusal_precision": 1.0,
-          "refusal_recall": 0.0,
+          "refusal_recall": 1.0,
           "reproducibility": 1.0,
-          "latency_ms_p50": 3672.909,
-          "latency_ms_p95": 8762.532
+          "latency_ms_p50": 3519.297,
+          "latency_ms_p95": 3822.549
         },
         "gates": {
           "wrong_send_rate_max": 0.0,
           "semantic_accuracy_min": 0.9,
-          "passed": false
+          "passed": true
         }
       },
       "paraphrase": {
         "schema_version": "1.0",
-        "generated_at": "2026-06-29T07:51:07.861663+00:00",
+        "generated_at": "2026-07-07T21:42:00.797009+00:00",
         "baseline": "B3",
         "suite": "paraphrase",
         "device_id": "max-msp",
@@ -209,8 +209,8 @@
           "refusal_precision": 1.0,
           "refusal_recall": 1.0,
           "reproducibility": 1.0,
-          "latency_ms_p50": 3773.778,
-          "latency_ms_p95": 4368.905
+          "latency_ms_p50": 3768.124,
+          "latency_ms_p95": 4018.879
         },
         "gates": {
           "wrong_send_rate_max": 0.0,
@@ -221,17 +221,17 @@
     }
   },
   "gaps": {
-    "b1": {
-      "literal_semantic_accuracy": 0.375,
-      "paraphrase_semantic_accuracy": 0.125,
-      "paraphrase_gap_pts": 25.0
-    },
-    "b2": {
-      "literal_semantic_accuracy": 0.625,
-      "paraphrase_semantic_accuracy": 0.625,
+    "b0": {
+      "literal_semantic_accuracy": 1.0,
+      "paraphrase_semantic_accuracy": 1.0,
       "paraphrase_gap_pts": 0.0
     },
-    "b0": {
+    "b1": {
+      "literal_semantic_accuracy": 1.0,
+      "paraphrase_semantic_accuracy": 1.0,
+      "paraphrase_gap_pts": 0.0
+    },
+    "b2": {
       "literal_semantic_accuracy": 1.0,
       "paraphrase_semantic_accuracy": 1.0,
       "paraphrase_gap_pts": 0.0
@@ -245,6 +245,6 @@
   "recommendation": {
     "demo_backend": "b0",
     "lora_recommended": false,
-    "note": "B0 and B3 pass hero paraphrase gates with profile tags + slot refine."
+    "note": "LoRA go/no-go: paraphrase gap >= 10 pts vs B0 literal and no LLM backend >= 90% on paraphrase."
   }
 }

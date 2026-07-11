@@ -14,8 +14,9 @@
   "eval_b3": {
     "literal_semantic_accuracy": 1.0,
     "paraphrase_semantic_accuracy": 1.0,
-    "wrong_send_count": 0,
+    "wrong_send_rate": 0.0,
+    "refusal_recall": 1.0,
     "gates_passed": true,
-    "note": "LoRA proposes intent; retrieval + slot fill refine from NL (profile-driven)."
+    "note": "LoRA proposes intent; retrieval gate + NL refine align with B0 policy (2026-07-07)."
   }
 }

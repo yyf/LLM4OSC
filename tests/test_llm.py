@@ -7,6 +7,7 @@ import pytest
 
 from llm4osc.llm import (
     _normalize_parsed,
+    apply_retrieval_gate,
     extract_json_object,
     load_few_shot_examples,
     resolve_nl_llm,
@@ -164,6 +165,68 @@ def test_resolve_nl_llm_retries_on_bad_json() -> None:
 def test_few_shot_examples_load() -> None:
     examples = load_few_shot_examples("max-msp")
     assert len(examples) >= 2
+
+
+def test_retrieval_gate_oov_refuses_hallucinated_intent() -> None:
+    raw = json.dumps(
+        {
+            "kind": "intent",
+            "pattern_id": "gain_set",
+            "address": "/gain",
+            "type_tags": "f",
+            "args": [0.03],
+        }
+    )
+    llm = MockLLM(raw)
+    result = resolve_nl_llm("boost the bass band by 3db", PROFILE, llm=llm)
+    assert isinstance(result, RefusalIntent)
+    assert result.reason.value == "unknown_pattern"
+
+
+def test_retrieval_gate_ambiguous_start() -> None:
+    raw = json.dumps(
+        {
+            "kind": "intent",
+            "pattern_id": "transport_start",
+            "address": "/transport/start",
+            "type_tags": "",
+            "args": [],
+        }
+    )
+    llm = MockLLM(raw)
+    result = resolve_nl_llm("start", PROFILE, llm=llm)
+    assert isinstance(result, RefusalIntent)
+    assert result.reason.value == "ambiguous_pattern"
+
+
+def test_retrieval_gate_missing_slot() -> None:
+    raw = json.dumps(
+        {
+            "kind": "intent",
+            "pattern_id": "gain_set",
+            "address": "/gain",
+            "type_tags": "f",
+            "args": [0.5],
+        }
+    )
+    llm = MockLLM(raw)
+    result = resolve_nl_llm("set gain", PROFILE, llm=llm)
+    assert isinstance(result, RefusalIntent)
+    assert result.reason.value == "missing_slot"
+
+
+def test_apply_retrieval_gate_unknown_pattern_dict() -> None:
+    data = apply_retrieval_gate(
+        {
+            "kind": "intent",
+            "pattern_id": "gain_set",
+            "args": [0.5],
+        },
+        PROFILE,
+        "flux capacitor to 88 mph",
+    )
+    assert data["kind"] == "refusal"
+    assert data["reason"] == "unknown_pattern"
 
 
 @pytest.mark.llm

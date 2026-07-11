@@ -1,26 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-06-29T07:49:44.115821+00:00",
+  "generated_at": "2026-07-07T21:43:54.114945+00:00",
   "baseline": "B3",
   "suite": "literal",
   "device_id": "max-msp",
   "profile_version": "prof_20260610_mvp0",
   "counts": {
     "nl_cases": 8,
-    "refusal_cases": 3
+    "refusal_cases": 4
   },
   "metrics": {
     "semantic_accuracy": 1.0,
-    "wrong_send_rate": 0.2727,
+    "wrong_send_rate": 0.0,
     "refusal_precision": 1.0,
-    "refusal_recall": 0.0,
+    "refusal_recall": 1.0,
     "reproducibility": 1.0,
-    "latency_ms_p50": 3672.909,
-    "latency_ms_p95": 8762.532
+    "latency_ms_p50": 3551.661,
+    "latency_ms_p95": 10255.498
   },
   "gates": {
     "wrong_send_rate_max": 0.0,
     "semantic_accuracy_min": 0.9,
-    "passed": false
+    "passed": true
   }
 }
