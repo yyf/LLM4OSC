@@ -1,5 +1,7 @@
 # LLM4OSC
 
+<img width="960" height="526" alt="demo" src="https://github.com/user-attachments/assets/bfc4f260-8ab8-4a30-8347-0c0b8b24b7a3" />
+
 **Don't let the LLM touch the wire.**
 
 Natural language → structured intent → validated OSC. Models *propose* JSON over a versioned device profile; deterministic code *decides* what hits UDP. Same validated intent → same OSC bytes. Out-of-profile input is refused, not guessed.
