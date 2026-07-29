@@ -1,7 +1,7 @@
 # LLM4OSC
-
+<br>
 <img width="960" height="526" alt="demo" src="https://github.com/user-attachments/assets/bfc4f260-8ab8-4a30-8347-0c0b8b24b7a3" />
-
+<br>
 [![arXiv](https://img.shields.io/badge/arXiv-2607.26024-b31b1b.svg)](https://arxiv.org/abs/2607.26024)
 
 **Don't let the LLM touch the wire.**
