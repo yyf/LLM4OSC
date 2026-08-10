@@ -67,17 +67,24 @@ export LLM4OSC_SERVE_URL=http://127.0.0.1:8765   # reuse in other shells
 
 ## Evaluation
 
-Frozen Max/MSP suite: 8 literal + 8 paraphrase + 4 refusal.  
-Gates: semantic accuracy ≥ 90%, **wrong-send rate 0%**.
+Frozen Max/MSP holdout suite (excluded from LoRA training): **8 literal + 8 paraphrase + 4 refusal** on a 12-pattern hero profile.
 
-| Backend | Literal | Paraphrase | Wrong-send (para) | p50      |
-|---------|---------|------------|-------------------|----------|
-| **B0**  | 100%    | 100%       | 0%                | ~0.05 ms |
-| B1†     | 100%    | 100%       | 0%                | ~3.9 s   |
-| B2†     | 100%    | 100%       | 0%                | ~3.8 s   |
-| B3†     | 100%    | 100%       | 0%                | ~3.8 s   |
+Primary safety metric: **wrong-send rate** — mismatched intents that would pass Tier 3 dry-run and transmit OSC. Missed commands (safe refusals) do not count.
 
-† B1–B3 scores include the **retrieval gate** (same refusal policy as B0). Use **B0** for live control — sub-ms latency, no GPU. Details: [`docs/evaluation.md`](docs/evaluation.md).
+Release gates: semantic accuracy ≥ 90%, **wrong-send rate 0%**. CI enforces B0 on literal + refusal (`pytest`, `llm4osc score`).
+
+### Track C (2026-07-07) — with retrieval gate
+
+B1–B3 re-apply B0’s refuse policy after the model proposes JSON (zero retrieval score / ambiguous tie / unfillable slot → refuse). Without that gate, raw B1/B2 wrong-sent ~12–38% on paraphrase.
+
+| Backend | Literal | Paraphrase | Wrong-send (para) | Refusal recall (lit) | p50 (para) |
+|---------|---------|------------|-------------------|----------------------|------------|
+| **B0**  | 100%    | 100%       | 0%                | 100%                 | ~0.06 ms   |
+| B1      | 100%    | 100%       | 0%                | 100%                 | ~3.9 s     |
+| B2      | 100%    | 100%       | 0%                | 100%                 | ~3.8 s     |
+| B3      | 100%    | 100%       | 0%                | 100%                 | ~3.8 s     |
+
+Use **B0** for live control (sub-ms, no GPU). B1–B3 gating clears the suite but does not prove the model understood the phrase — the gate carries refusal. Scorecards: [`benchmarks/results/track_c.json`](benchmarks/results/track_c.json). B3 recipe: [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md).
 
 ```bash
 pytest
@@ -85,8 +92,6 @@ llm4osc score
 llm4osc score --suite paraphrase
 llm4osc score-compare --backends b0,b1,b2,b3 --adapter models/qwen2-0.5b-osc/adapter
 ```
-
-[`docs/evaluation.md`](docs/evaluation.md) · [`benchmarks/results/track_c.json`](benchmarks/results/track_c.json) · [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md)
 
 ### Train B3 (optional)
 
@@ -100,8 +105,8 @@ pip install -e ".[train]" && python training/train_lora.py
 ## Limitations
 
 - One device profile (Max/MSP, 12 patterns) — other rigs need new profiles
-- Small benchmark; passing gates ≠ show-day coverage
-- B1/B2 unsafe without Tier 3; B3 needs local training, ~3–4 s inference
+- Small benchmark (20 NL-facing cases); passing gates ≠ show-day coverage
+- B1–B3 unsafe without retrieval gate + Tier 3; LLM path ~3–4 s p50
 - Text NL only — no speech, MCP server, or automated manual ingest
 
 ## Layout
