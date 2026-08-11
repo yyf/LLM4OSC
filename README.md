@@ -67,24 +67,38 @@ export LLM4OSC_SERVE_URL=http://127.0.0.1:8765   # reuse in other shells
 
 ## Evaluation
 
-Frozen Max/MSP holdout suite (excluded from LoRA training): **8 literal + 8 paraphrase + 4 refusal** on a 12-pattern hero profile.
+Frozen Max/MSP holdout suite (excluded from LoRA training): **8 literal + 8 paraphrase + 4 refusal** on profile `prof_20260610_mvp0` (12 patterns).
 
 Primary safety metric: **wrong-send rate** — mismatched intents that would pass Tier 3 dry-run and transmit OSC. Missed commands (safe refusals) do not count.
 
-Release gates: semantic accuracy ≥ 90%, **wrong-send rate 0%**. CI enforces B0 on literal + refusal (`pytest`, `llm4osc score`).
+Release gates: semantic accuracy ≥ 90%, **wrong-send rate 0%**. CI enforces B0 on literal + refusal (`pytest`, `llm4osc score`). Source: [`benchmarks/results/track_c.json`](benchmarks/results/track_c.json). B3 recipe: [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md).
 
-### Track C (2026-07-07) — with retrieval gate
+`—` = not reported in that snapshot.
 
-B1–B3 re-apply B0’s refuse policy after the model proposes JSON (zero retrieval score / ambiguous tie / unfillable slot → refuse). Without that gate, raw B1/B2 wrong-sent ~12–38% on paraphrase.
+| Run              | Date       | Backend | Suite      | Sem. acc. | Wrong-send | Refusal P | Refusal R | Repro | p50     | p95     | Gates |
+|------------------|------------|---------|------------|-----------|------------|-----------|-----------|-------|---------|---------|-------|
+| Track C          | 2026-07-07 | **B0**  | literal    | 100%      | 0%         | 100%      | 100%      | 100%  | 0.05 ms | 0.22 ms | pass  |
+| Track C          | 2026-07-07 | B1      | literal    | 100%      | 0%         | 100%      | 100%      | 100%  | 3.68 s  | 11.13 s | pass  |
+| Track C          | 2026-07-07 | B2      | literal    | 100%      | 0%         | 100%      | 100%      | 100%  | 4.27 s  | 5.39 s  | pass  |
+| Track C          | 2026-07-07 | B3      | literal    | 100%      | 0%         | 100%      | 100%      | 100%  | 3.52 s  | 3.82 s  | pass  |
+| Track C          | 2026-07-07 | **B0**  | paraphrase | 100%      | 0%         | 100%      | 100%      | 100%  | 0.06 ms | 0.08 ms | pass  |
+| Track C          | 2026-07-07 | B1      | paraphrase | 100%      | 0%         | 100%      | 100%      | 100%  | 3.85 s  | 4.39 s  | pass  |
+| Track C          | 2026-07-07 | B2      | paraphrase | 100%      | 0%         | 100%      | 100%      | 100%  | 3.83 s  | 5.14 s  | pass  |
+| Track C          | 2026-07-07 | B3      | paraphrase | 100%      | 0%         | 100%      | 100%      | 100%  | 3.77 s  | 4.02 s  | pass  |
+| Pre-gate         | 2026-06-28 | B1      | literal    | 37.5%     | 27.3%      | 100%      | 0%        | 100%  | 2.95 s  | 3.82 s  | fail  |
+| Pre-gate         | 2026-06-28 | B1      | paraphrase | 12.5%     | 37.5%      | 100%      | —         | 100%  | 2.92 s  | 4.00 s  | fail  |
+| Pre-gate         | 2026-06-28 | B2      | literal    | 62.5%     | 9.1%       | 100%      | 33.3%     | 100%  | 3.14 s  | 5.00 s  | fail  |
+| Pre-gate         | 2026-06-28 | B2      | paraphrase | 62.5%     | 12.5%      | 100%      | —         | 100%  | 2.72 s  | 6.26 s  | fail  |
+| Pre-gate (B3 v1) | —          | B3      | literal    | 100%      | —          | —         | —         | —     | —       | —       | —     |
+| Pre-gate (B3 v1) | —          | B3      | paraphrase | 62.5%     | —          | —         | —         | —     | —       | —       | —     |
+| Historical       | 2026-06-25 | B0      | lit+refuse | 100%      | 0%         | 100%      | 100%      | 100%  | 0.04 ms | 0.24 ms | pass  |
+| Historical       | 2026-06-25 | B1      | lit+refuse | 25%       | 9.1%       | 100%      | 0%        | 100%  | 3.18 s  | 11.58 s | fail  |
 
-| Backend | Literal | Paraphrase | Wrong-send (para) | Refusal recall (lit) | p50 (para) |
-|---------|---------|------------|-------------------|----------------------|------------|
-| **B0**  | 100%    | 100%       | 0%                | 100%                 | ~0.06 ms   |
-| B1      | 100%    | 100%       | 0%                | 100%                 | ~3.9 s     |
-| B2      | 100%    | 100%       | 0%                | 100%                 | ~3.8 s     |
-| B3      | 100%    | 100%       | 0%                | 100%                 | ~3.8 s     |
+**Notes:** Track C is the current frozen scorecard with retrieval gate — literal = 8 NL + 4 refuse, paraphrase = 8 NL only (`track_c.json`). Pre-gate rows are ungated LLM snapshots (`b1_literal.json`, `b1_paraphrase.json`, `b2_literal.json`, `b2_paraphrase.json`); refusal suite then had **3** cases (before `refuse_oov_eq`). Pre-gate (B3 v1) is LoRA only, before NL refine + gate. Historical rows are single combined lit+refuse scorecards (`baseline.json`, `b1.json`; 8 NL + 3 refuse), not split by suite.
 
-Use **B0** for live control (sub-ms, no GPU). B1–B3 gating clears the suite but does not prove the model understood the phrase — the gate carries refusal. Scorecards: [`benchmarks/results/track_c.json`](benchmarks/results/track_c.json). B3 recipe: [`models/qwen2-0.5b-osc/model_card.md`](models/qwen2-0.5b-osc/model_card.md).
+Literal↔paraphrase gap on Track C (sem. acc.): **0 pts** for B0–B3. Scorecard recommendation: demo **B0**; LoRA not required for this suite (`lora_recommended: false`).
+
+B1–B3 on Track C re-apply B0’s refuse policy after the model proposes JSON. Gated pass ≠ model competence — the gate carries refusal. Use **B0** for live control (sub-ms, no GPU).
 
 ```bash
 pytest
