@@ -8,15 +8,11 @@
 
 <br>
 
-<div align="center">
-
 ```
                 ┌──────────┐
 Prompt (NL) ──▶ │ LLM4OSC  │ ──▶ OSC (UDP)
                 └──────────┘
 ```
-
-</div>
 
 **Don't let the LLM touch the wire.**
 
