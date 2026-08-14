@@ -8,6 +8,16 @@
 
 <br>
 
+<div align="center">
+
+```
+                ┌──────────┐
+Prompt (NL) ──▶ │ LLM4OSC  │ ──▶ OSC (UDP)
+                └──────────┘
+```
+
+</div>
+
 **Don't let the LLM touch the wire.**
 
 Natural language → structured intent → validated OSC. Models *propose* JSON over a versioned device profile; deterministic code *decides* what hits UDP. Same validated intent → same OSC bytes. Out-of-profile input is refused, not guessed.
