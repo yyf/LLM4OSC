@@ -88,6 +88,7 @@ def test_resolve_nl_uses_serve_url(monkeypatch: pytest.MonkeyPatch) -> None:
         backend: str = "b1",
         model_id: str | None = None,
         adapter_path: str | None = None,
+        retrieval_gate: bool = True,
     ) -> SuccessIntent:
         calls.append(base_url)
         from llm4osc.resolver import resolve_nl_b0
