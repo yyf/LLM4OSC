@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+demo = ["gradio>=4.0"]
 llm = [
     "torch>=2.0",
     "transformers>=4.40",

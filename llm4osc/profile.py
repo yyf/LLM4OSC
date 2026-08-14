@@ -54,6 +54,25 @@ def find_committed_profile(device_id: str) -> DeviceProfile:
     return load_profile(matches[-1])
 
 
+def list_committed_profiles() -> list[dict[str, str]]:
+    """Return committed profiles as {device_id, profile_version, path} rows."""
+    rows: list[dict[str, str]] = []
+    for path in sorted(committed_dir().glob("*.json")):
+        try:
+            profile = load_profile(path)
+        except Exception:
+            continue
+        rows.append(
+            {
+                "device_id": profile.device_id,
+                "profile_version": profile.profile_version,
+                "path": str(path),
+                "label": f"{profile.device_id} ({profile.profile_version})",
+            }
+        )
+    return rows
+
+
 def validate_profile(profile: DeviceProfile) -> list[str]:
     errors: list[str] = []
     seen_ids: set[str] = set()

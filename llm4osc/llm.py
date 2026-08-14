@@ -356,6 +356,8 @@ def _normalize_parsed(
     data: dict[str, Any],
     profile: DeviceProfile,
     nl: str | None = None,
+    *,
+    retrieval_gate: bool = True,
 ) -> dict[str, Any]:
     data.setdefault("schema_version", "1.0")
     data.setdefault("device_id", profile.device_id)
@@ -365,7 +367,8 @@ def _normalize_parsed(
     _enrich_from_profile(data, profile)
     if nl:
         _refine_intent_with_nl(data, profile, nl)
-        data = apply_retrieval_gate(data, profile, nl)
+        if retrieval_gate:
+            data = apply_retrieval_gate(data, profile, nl)
     return data
 
 
@@ -373,8 +376,15 @@ def _parse_llm_output(
     raw: str,
     profile: DeviceProfile,
     nl: str | None = None,
+    *,
+    retrieval_gate: bool = True,
 ) -> SuccessIntent | RefusalIntent:
-    data = _normalize_parsed(extract_json_object(raw), profile, nl)
+    data = _normalize_parsed(
+        extract_json_object(raw),
+        profile,
+        nl,
+        retrieval_gate=retrieval_gate,
+    )
     return parse_intent(data)
 
 
@@ -387,6 +397,7 @@ def resolve_nl_llm(
     model_id: str | None = None,
     adapter_path: str | Path | None = None,
     top_k: int = 8,
+    retrieval_gate: bool = True,
 ) -> SuccessIntent | RefusalIntent:
     patterns = patterns_for_context(text, profile.patterns, k=top_k)
     few_shot_examples = load_few_shot_examples(profile.device_id) if few_shot else []
@@ -417,7 +428,9 @@ def resolve_nl_llm(
         try:
             raw = model.complete(attempt_messages)
             _debug(f"attempt {attempt + 1} raw output:\n{raw}")
-            parsed = _parse_llm_output(raw, profile, text)
+            parsed = _parse_llm_output(
+                raw, profile, text, retrieval_gate=retrieval_gate
+            )
         except Exception as exc:
             last_error = str(exc)
             _debug(f"attempt {attempt + 1} parse error: {last_error}")

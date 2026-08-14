@@ -183,6 +183,28 @@ def test_retrieval_gate_oov_refuses_hallucinated_intent() -> None:
     assert result.reason.value == "unknown_pattern"
 
 
+def test_retrieval_gate_off_allows_oov_hallucination() -> None:
+    raw = json.dumps(
+        {
+            "kind": "intent",
+            "pattern_id": "gain_set",
+            "address": "/gain",
+            "type_tags": "f",
+            "args": [0.03],
+        }
+    )
+    llm = MockLLM(raw)
+    result = resolve_nl_llm(
+        "boost the bass band by 3db",
+        PROFILE,
+        llm=llm,
+        retrieval_gate=False,
+    )
+    assert isinstance(result, SuccessIntent)
+    assert result.pattern_id == "gain_set"
+    assert result.args == [0.03]
+
+
 def test_retrieval_gate_ambiguous_start() -> None:
     raw = json.dumps(
         {
