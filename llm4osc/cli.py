@@ -287,6 +287,13 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_demo(args: argparse.Namespace) -> int:
+    from demo.app import main as demo_main
+
+    demo_main()
+    return 0
+
+
 def cmd_train_data(args: argparse.Namespace) -> int:
     from llm4osc.training_data import generate_dataset
 
@@ -440,6 +447,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip model load at startup (load on first b1/b2/b3 request)",
     )
     s.set_defaults(func=cmd_serve)
+
+    s = sub.add_parser("demo", help="Launch Gradio demo UI (profile / backend / dry-run)")
+    s.set_defaults(func=cmd_demo)
 
     s = sub.add_parser("train-data", help="Generate LoRA training JSONL")
     s.add_argument("--device", default="max-msp")

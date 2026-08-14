@@ -35,6 +35,9 @@ def handle_resolve(body: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("backend must be b0, b1, b2, or b3")
 
     profile = find_committed_profile(device_id)
+    retrieval_gate = body.get("retrieval_gate", True)
+    if not isinstance(retrieval_gate, bool):
+        raise ValueError("retrieval_gate must be a boolean")
     result = resolve_nl(
         nl,
         profile,
@@ -42,6 +45,7 @@ def handle_resolve(body: dict[str, Any]) -> dict[str, Any]:
         model_id=body.get("model_id"),
         adapter_path=body.get("adapter_path"),
         serve_url=None,
+        retrieval_gate=retrieval_gate,
     )
     return result.model_dump(mode="json")
 
@@ -54,6 +58,7 @@ def resolve_remote(
     backend: Backend = "b1",
     model_id: str | None = None,
     adapter_path: str | None = None,
+    retrieval_gate: bool = True,
 ) -> SuccessIntent | RefusalIntent:
     payload = json.dumps(
         {
@@ -62,6 +67,7 @@ def resolve_remote(
             "backend": backend,
             "model_id": model_id,
             "adapter_path": adapter_path,
+            "retrieval_gate": retrieval_gate,
         }
     ).encode("utf-8")
     req = Request(

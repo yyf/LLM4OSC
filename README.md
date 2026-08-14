@@ -1,6 +1,6 @@
 # LLM4OSC
 
-<img width="960" height="526" alt="demo" src="https://github.com/user-attachments/assets/bfc4f260-8ab8-4a30-8347-0c0b8b24b7a3" />
+<img width="960" height="525" alt="LLM4OSC demo" src="docs/assets/screencap-20260814.gif" />
 
 <br>
 
@@ -48,6 +48,18 @@ llm4osc profile list-patterns --device max-msp
 ```
 
 Default backend: **B0** (rules + slot fill, no GPU).
+
+## Demo UI
+
+Local Gradio panel: swap **committed profile**, **backend** (B0–B3), dry-run / refuse preview, and optional **retrieval gate off** to show wrong-send risk. LoRA is a **B3** preset (preloaded adapter path) — not drag‑drop weights.
+
+```bash
+pip install -e ".[demo]"
+python demo/app.py
+# or: llm4osc demo
+```
+
+See [`demo/README.md`](demo/README.md).
 
 ## Backends
 
@@ -125,7 +137,7 @@ pip install -e ".[train]" && python training/train_lora.py
 
 ## Layout
 
-`llm4osc/` · `tier3/` · `profiles/committed/` · `benchmarks/` · `schemas/` · `training/`
+`llm4osc/` · `tier3/` · `profiles/committed/` · `benchmarks/` · `schemas/` · `training/` · `demo/`
 
 ## License
 

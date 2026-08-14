@@ -69,6 +69,7 @@ def resolve_nl(
     model_id: str | None = None,
     adapter_path: str | None = None,
     serve_url: str | None = None,
+    retrieval_gate: bool = True,
 ) -> SuccessIntent | RefusalIntent:
     if backend == "b0":
         return resolve_nl_b0(text, profile)
@@ -84,6 +85,7 @@ def resolve_nl(
             backend=backend,
             model_id=model_id,
             adapter_path=adapter_path,
+            retrieval_gate=retrieval_gate,
         )
 
     resolved_adapter = adapter_path
@@ -99,4 +101,5 @@ def resolve_nl(
         llm=llm,
         model_id=model_id,
         adapter_path=resolved_adapter,
+        retrieval_gate=retrieval_gate,
     )
