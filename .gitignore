@@ -13,9 +13,9 @@ venv/
 .DS_Store
 datasets/manuals/.venv/
 datasets/manuals/pdfs/*.pdf
-docs/internal/*.pdf
-docs/internal/*.xlsx
+docs/internal/
 data/*.jsonl
 models/**/checkpoints/
 models/**/adapter/*.safetensors
 models/**/adapter/*.bin
+profiles/acceptance/**/last_report.json

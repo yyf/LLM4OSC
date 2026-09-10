@@ -1,0 +1,10 @@
+{
+  "id": "nl_transport_stop",
+  "nl": "stop transport",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "transport_stop",
+    "address": "/transport/stop",
+    "args": []
+  }
+}

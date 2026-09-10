@@ -1,0 +1,8 @@
+{
+  "id": "refuse_missing_slot",
+  "nl": "set gain",
+  "expect": {
+    "kind": "refusal",
+    "reason": "missing_slot"
+  }
+}

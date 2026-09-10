@@ -1,0 +1,10 @@
+{
+  "id": "nl_record_start",
+  "nl": "start recording",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "record_start",
+    "address": "/record/start",
+    "args": []
+  }
+}
