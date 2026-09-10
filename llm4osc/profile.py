@@ -106,13 +106,29 @@ def init_draft(device_id: str) -> DeviceProfile:
     )
 
 
-def commit_draft(draft_path: Path) -> Path:
+def commit_draft(
+    draft_path: Path,
+    *,
+    force: bool = False,
+    skip_acceptance: bool = False,
+) -> Path:
     profile = load_profile(draft_path)
     errors = validate_profile(profile)
     if errors:
         raise ProfileError("; ".join(errors))
     if not profile.patterns:
         raise ProfileError("Profile has no patterns")
+
+    if not skip_acceptance:
+        from llm4osc.acceptance import (
+            bind_profile_version,
+            check_commit_gate,
+            suite_exists,
+        )
+
+        # Gate against the draft map before bumping version.
+        if suite_exists(profile.device_id) or profile.device_id == "max-msp":
+            check_commit_gate(profile.device_id, profile, force=force)
 
     profile.profile_version = new_profile_version()
     profile.reviewed_at = datetime.now(timezone.utc).isoformat()
@@ -129,6 +145,13 @@ def commit_draft(draft_path: Path) -> Path:
     out = committed_dir() / f"{profile.device_id}-{profile.profile_version}.json"
     committed_dir().mkdir(parents=True, exist_ok=True)
     save_profile(out, profile)
+
+    if not skip_acceptance:
+        from llm4osc.acceptance import bind_profile_version, suite_exists
+
+        if suite_exists(profile.device_id):
+            bind_profile_version(profile.device_id, profile.profile_version)
+
     return out
 
 

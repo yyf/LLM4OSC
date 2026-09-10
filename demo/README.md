@@ -32,8 +32,28 @@ Layout (top → bottom):
 - Status HTML
 - Row: OSC preview · Retrieval scores
 - Intent JSON
+- **Profile Acceptance** panel: status · Pin must-work / must-refuse · Run acceptance ·
+  Check commit gate
 
 Behavior: always dry-run (no UDP); B0 ignores gate; B1–B3 honor gate.
+
+### Profile Acceptance (review UX)
+
+On first load, Max suite is seeded from `benchmarks/golden_*` into
+`profiles/acceptance/<device>/`.
+
+```
+Step                 | Control
+---------------------+----------------------------------
+Preview              | Resolve (existing)
+Pin must-work        | After a would-send preview
+Pin must-refuse      | After a refuse (or force refuse expect)
+Run acceptance       | Score local suite (wrong-send gate)
+Check commit gate    | Same score; shows Commit OK / blocked
+```
+
+CLI equivalents: `llm4osc acceptance ensure|run|status`, `llm4osc golden add`.
+
 
 ## Default UI v1 (earlier revert baseline)
 

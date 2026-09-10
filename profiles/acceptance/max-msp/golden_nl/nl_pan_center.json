@@ -1,0 +1,10 @@
+{
+  "id": "nl_pan_center",
+  "nl": "set pan to 0",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "pan_set",
+    "address": "/pan",
+    "args": [0.0]
+  }
+}

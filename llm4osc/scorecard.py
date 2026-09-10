@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from llm4osc.models import RefusalIntent, SuccessIntent
+from llm4osc.models import DeviceProfile, RefusalIntent, SuccessIntent
 from llm4osc.profile import find_committed_profile, repo_root
 from llm4osc.resolver import Backend, resolve_nl
 from tier3.pipeline import run_pipeline
@@ -31,7 +31,20 @@ def _load_json_dir(directory: Path) -> list[dict[str, Any]]:
     return cases
 
 
-def _suite_dirs(suite: SuiteName) -> tuple[Path, Path | None, str]:
+def _suite_dirs(
+    suite: SuiteName,
+    *,
+    suite_root: Path | None = None,
+) -> tuple[Path, Path | None, str]:
+    if suite_root is not None:
+        nl = suite_root / "golden_nl"
+        refusal = suite_root / "golden_refusal"
+        if suite == "paraphrase":
+            para = suite_root / "golden_nl_paraphrase"
+            return para, None, "paraphrase"
+        if suite == "literal":
+            return nl, refusal, "literal"
+        return nl, refusal, "full"
     if suite == "literal":
         return GOLDEN_NL, GOLDEN_REFUSAL, "literal"
     if suite == "paraphrase":
@@ -95,9 +108,12 @@ def score(
     model_id: str | None = None,
     adapter_path: str | None = None,
     serve_url: str | None = None,
+    profile: DeviceProfile | None = None,
+    suite_root: Path | None = None,
 ) -> dict[str, Any]:
-    profile = find_committed_profile(device_id)
-    nl_dir, refusal_dir, suite_label = _suite_dirs(suite)
+    if profile is None:
+        profile = find_committed_profile(device_id)
+    nl_dir, refusal_dir, suite_label = _suite_dirs(suite, suite_root=suite_root)
     nl_cases = _load_json_dir(nl_dir)
     refusal_cases = _load_json_dir(refusal_dir) if refusal_dir else []
 
@@ -167,7 +183,7 @@ def score(
 
     baseline_label = {"b0": "B0", "b1": "B1", "b2": "B2", "b3": "B3"}[backend]
 
-    return {
+    out: dict[str, Any] = {
         "schema_version": "1.0",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "baseline": baseline_label,
@@ -197,6 +213,9 @@ def score(
             "passed": wrong_send_rate == 0.0 and semantic_accuracy >= 0.9,
         },
     }
+    if suite_root is not None:
+        out["suite_root"] = str(suite_root)
+    return out
 
 
 def compare_track_c(

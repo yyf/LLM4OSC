@@ -60,7 +60,7 @@ def test_commit_draft(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     )
     draft = draft_root / "drafts" / "gadget.json"
     save_profile(draft, profile)
-    out = commit_draft(draft)
+    out = commit_draft(draft, skip_acceptance=True)
     committed = load_profile(out)
     assert committed.device_id == "gadget"
     assert committed.profile_version.startswith("prof_")

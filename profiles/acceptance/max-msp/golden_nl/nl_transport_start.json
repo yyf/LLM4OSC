@@ -1,0 +1,10 @@
+{
+  "id": "nl_transport_start",
+  "nl": "start transport playback",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "transport_start",
+    "address": "/transport/start",
+    "args": []
+  }
+}

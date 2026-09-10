@@ -1,0 +1,10 @@
+{
+  "id": "nl_tempo_120",
+  "nl": "set tempo to 120 bpm",
+  "expect": {
+    "kind": "intent",
+    "pattern_id": "tempo_set",
+    "address": "/metro/tempo",
+    "args": [120.0]
+  }
+}

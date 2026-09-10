@@ -57,11 +57,73 @@ def cmd_profile_validate(args: argparse.Namespace) -> int:
 
 def cmd_profile_commit(args: argparse.Namespace) -> int:
     try:
-        out = commit_draft(Path(args.path))
+        out = commit_draft(
+            Path(args.path),
+            force=bool(getattr(args, "force", False)),
+            skip_acceptance=bool(getattr(args, "skip_acceptance", False)),
+        )
     except ProfileError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     print(f"Committed: {out}")
+    return 0
+
+
+def cmd_acceptance_ensure(args: argparse.Namespace) -> int:
+    from llm4osc.acceptance import ensure_suite, case_counts
+
+    meta = ensure_suite(args.device, seed_from_benchmarks=not args.empty)
+    counts = case_counts(args.device)
+    _print_json({"meta": meta, "counts": counts})
+    return 0
+
+
+def cmd_acceptance_run(args: argparse.Namespace) -> int:
+    from llm4osc.acceptance import run_acceptance, summarize_report
+
+    report = run_acceptance(args.device, backend=args.backend)
+    _print_json(report)
+    print(summarize_report(report), file=sys.stderr)
+    return 0 if report.get("gates", {}).get("passed") else 1
+
+
+def cmd_acceptance_status(args: argparse.Namespace) -> int:
+    from llm4osc.acceptance import status_panel
+
+    _print_json(status_panel(args.device))
+    return 0
+
+
+def cmd_golden_add(args: argparse.Namespace) -> int:
+    from llm4osc.acceptance import pin_case, pin_from_result
+    from llm4osc.profile import find_committed_profile
+    from llm4osc.resolver import resolve_nl
+
+    profile = find_committed_profile(args.device)
+    nl = args.nl
+    if args.expect_refuse:
+        path = pin_case(
+            args.device,
+            nl,
+            {"kind": "refusal", "reason": args.expect_refuse},
+            profile=profile,
+        )
+    elif args.from_resolve:
+        result = resolve_nl(nl, profile, backend="b0")
+        path = pin_from_result(
+            args.device,
+            nl,
+            result,
+            as_refusal=args.as_refuse,
+            profile=profile,
+        )
+    else:
+        print(
+            "ERROR: pass --from-resolve or --expect-refuse REASON",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"Pinned: {path}")
     return 0
 
 
@@ -221,6 +283,13 @@ def cmd_send(args: argparse.Namespace) -> int:
 def cmd_score(args: argparse.Namespace) -> int:
     from llm4osc.scorecard import score
 
+    suite_root = None
+    if getattr(args, "acceptance", False):
+        from llm4osc.acceptance import acceptance_dir, ensure_suite
+
+        ensure_suite(args.device)
+        suite_root = acceptance_dir(args.device)
+
     try:
         report = score(
             args.device,
@@ -229,6 +298,7 @@ def cmd_score(args: argparse.Namespace) -> int:
             model_id=args.model,
             adapter_path=getattr(args, "adapter", None),
             serve_url=getattr(args, "serve_url", None),
+            suite_root=suite_root,
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -335,6 +405,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = p_sub.add_parser("commit", help="Commit draft to profiles/committed/")
     s.add_argument("path")
+    s.add_argument(
+        "--force",
+        action="store_true",
+        help="Commit even if Profile Acceptance gate fails",
+    )
+    s.add_argument(
+        "--skip-acceptance",
+        action="store_true",
+        help="Skip acceptance gate (bootstrap / tests)",
+    )
     s.set_defaults(func=cmd_profile_commit)
 
     s = p_sub.add_parser("show", help="Show profile JSON")
@@ -409,6 +489,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["full", "literal", "paraphrase"],
         default="full",
     )
+    s.add_argument(
+        "--acceptance",
+        action="store_true",
+        help="Score profiles/acceptance/<device> instead of benchmarks/",
+    )
     s.add_argument("--model", default=None)
     s.add_argument(
         "--write",
@@ -419,6 +504,52 @@ def build_parser() -> argparse.ArgumentParser:
     _add_adapter_arg(s)
     _add_serve_url_arg(s)
     s.set_defaults(func=cmd_score)
+
+    acc = sub.add_parser(
+        "acceptance",
+        help="Profile Acceptance: per-rig suite pin / run / status",
+    )
+    a_sub = acc.add_subparsers(dest="acceptance_cmd")
+
+    s = a_sub.add_parser("ensure", help="Create suite (seed Max from benchmarks)")
+    s.add_argument("--device", default="max-msp")
+    s.add_argument(
+        "--empty",
+        action="store_true",
+        help="Do not seed from benchmarks/",
+    )
+    s.set_defaults(func=cmd_acceptance_ensure)
+
+    s = a_sub.add_parser("run", help="Score acceptance suite (B0 default)")
+    s.add_argument("--device", default="max-msp")
+    s.add_argument("--backend", choices=["b0", "b1", "b2", "b3"], default="b0")
+    s.set_defaults(func=cmd_acceptance_run)
+
+    s = a_sub.add_parser("status", help="Show suite counts + last report")
+    s.add_argument("--device", default="max-msp")
+    s.set_defaults(func=cmd_acceptance_status)
+
+    s = sub.add_parser("golden", help="Pin acceptance goldens")
+    g_sub = s.add_subparsers(dest="golden_cmd")
+    s = g_sub.add_parser("add", help="Pin NL into device acceptance suite")
+    s.add_argument("--device", default="max-msp")
+    s.add_argument("--nl", required=True)
+    s.add_argument(
+        "--from-resolve",
+        action="store_true",
+        help="Resolve with B0 and pin the result",
+    )
+    s.add_argument(
+        "--as-refuse",
+        action="store_true",
+        help="With --from-resolve, pin as must-refuse",
+    )
+    s.add_argument(
+        "--expect-refuse",
+        default=None,
+        help="Pin must-refuse with this reason (e.g. unknown_pattern)",
+    )
+    s.set_defaults(func=cmd_golden_add)
 
     s = sub.add_parser(
         "score-compare",
@@ -466,7 +597,19 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
     if args.command == "profile" and not getattr(args, "profile_cmd", None):
-        profile_parser.print_help()
+        print("usage: llm4osc profile <init|validate|commit|...> ...", file=sys.stderr)
+        return 0
+    if args.command == "acceptance" and not getattr(args, "acceptance_cmd", None):
+        print(
+            "usage: llm4osc acceptance <ensure|run|status> [--device max-msp]",
+            file=sys.stderr,
+        )
+        return 0
+    if args.command == "golden" and not getattr(args, "golden_cmd", None):
+        print(
+            "usage: llm4osc golden add --nl ... (--from-resolve | --expect-refuse REASON)",
+            file=sys.stderr,
+        )
         return 0
     return args.func(args)
 

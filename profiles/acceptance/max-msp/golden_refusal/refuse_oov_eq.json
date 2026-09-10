@@ -1,0 +1,8 @@
+{
+  "id": "refuse_oov_eq",
+  "nl": "boost the bass band by 3db",
+  "expect": {
+    "kind": "refusal",
+    "reason": "unknown_pattern"
+  }
+}
