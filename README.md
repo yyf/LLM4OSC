@@ -67,6 +67,17 @@ python demo/app.py
 
 See [`demo/README.md`](demo/README.md).
 
+## Max example (Node for Max)
+
+Thin Max client → local `llm4osc serve` (preview by default; UDP only if you enable **live** in the patch):
+
+```bash
+llm4osc serve --no-preload
+# open examples/max-n4m-llm4osc/llm4osc.maxpat → script start → resolve …
+```
+
+See [`examples/max-n4m-llm4osc/README.md`](examples/max-n4m-llm4osc/README.md).
+
 ## Backends
 
 | Backend | What                             | When                          |
