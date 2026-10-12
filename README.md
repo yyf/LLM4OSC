@@ -5,6 +5,7 @@
 <br>
 
 [![arXiv](https://img.shields.io/badge/arXiv-2607.26024-b31b1b.svg)](https://arxiv.org/abs/2607.26024)
+[![YouTube](https://img.shields.io/badge/YouTube-demo-FF0000.svg)](https://youtu.be/sixYrudlc1A)
 
 <br>
 
